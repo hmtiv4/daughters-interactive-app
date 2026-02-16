@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>⚔️ RPG Character Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden}
+  body{font-family:'Silkscreen',monospace;background:linear-gradient(160deg,#0c0c1d 0%,#1a1a35 40%,#0d2137 100%);color:#ccc;touch-action:manipulation}
+  @keyframes shimmer{0%,100%{box-shadow:0 0 12px rgba(100,220,200,0.2)}50%{box-shadow:0 0 24px rgba(100,220,200,0.45)}}
+  #app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+  .topbar{display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid #1a3050;flex-shrink:0;flex-wrap:wrap}
+  .topbar .title{color:#64dcc8;font-size:clamp(11px,2.5vw,14px);letter-spacing:2px;text-shadow:0 0 20px rgba(100,220,200,0.4);white-space:nowrap}
+  .topbar input{font-family:'Silkscreen',monospace;font-size:11px;padding:4px 8px;background:#111a30;color:#64dcc8;border:1px solid #1a3050;border-radius:6px;outline:none;width:100%;max-width:180px}
+  .topbar input::placeholder{color:#445566}
+  .topbar .btns{display:flex;gap:6px}
+  .btn{font-family:'Silkscreen',monospace;font-size:10px;padding:5px 10px;color:#fff;border:none;border-radius:7px;cursor:pointer;transition:all .1s}
+  .btn:active{transform:scale(0.95)}
+  .btn-rand{background:#d35f5f;box-shadow:0 3px 10px #d35f5f44}
+  .btn-save{background:#2980b9;box-shadow:0 3px 10px #2980b944}
+  .btn-share{background:#27ae60;box-shadow:0 3px 10px #27ae6044}
+  .toast{position:fixed;top:12px;left:50%;transform:translateX(-50%) translateY(-60px);background:#27ae60;color:#fff;font-family:'Silkscreen',monospace;font-size:11px;padding:8px 18px;border-radius:8px;z-index:2000;transition:transform .3s ease,opacity .3s ease;opacity:0;pointer-events:none;white-space:nowrap}
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+  .main{flex:1;display:flex;overflow:hidden;min-height:0}
+  .preview{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px;flex-shrink:0}
+  .scene{border-radius:10px;padding:4px;animation:shimmer 4s ease-in-out infinite;display:flex;justify-content:center;align-items:center;width:min(95%,420px);aspect-ratio:16/9;background:#0a0a18}
+  .scene canvas{image-rendering:pixelated;width:100%;height:100%;border-radius:6px}
+  .scene.transparent canvas{background:repeating-conic-gradient(#333 0% 25%,#555 0% 50%) 0 0/12px 12px}
+  .nameplate{margin-top:8px;padding:3px 14px;background:rgba(100,220,200,0.08);border:1px solid #1a3858;border-radius:6px;color:#64dcc8;font-size:clamp(10px,2vw,13px);text-align:center;letter-spacing:1px;max-width:95%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .divider{width:8px;cursor:col-resize;background:#1a3050;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s;touch-action:none}
+  .divider:hover,.divider:active{background:#2a4060}
+  .divider::after{content:'';display:block;width:2px;height:32px;border-radius:1px;background:#3a5a7a;box-shadow:4px 0 0 #3a5a7a}
+  .controls{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+  .tabs{display:flex;border-bottom:2px solid #1a3050;flex-shrink:0;overflow-x:auto}
+  .tab{font-family:'Silkscreen',monospace;font-size:9px;padding:6px 4px;flex:1;min-width:0;background:#111a30;color:#667788;border:none;border-bottom:3px solid transparent;cursor:pointer;transition:all .1s;white-space:nowrap}
+  .tab:hover{background:#1e2d50}
+  .tab.on{background:#0d2137;border-bottom-color:#64dcc8;color:#64dcc8}
+  .tab .icon{font-size:13px;display:block}
+  .options{flex:1;overflow-y:auto;padding:8px 12px}
+  .sec{margin-bottom:10px}
+  .sec-label{color:#64dcc8;font-size:9px;margin-bottom:5px;text-transform:uppercase;letter-spacing:1.5px}
+  .swatches{display:flex;gap:3px;flex-wrap:wrap;align-items:center}
+  .sw{width:22px;height:22px;border-radius:4px;border:2px solid transparent;cursor:pointer;transition:all .1s;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+  .sw:hover{transform:scale(1.2);z-index:1}
+  .sw.on{border-color:#64dcc8;box-shadow:0 0 8px rgba(100,220,200,0.5)}
+  .sw-none{background:#111a30;color:#556;font-size:11px}
+  .sw-div{width:1px;height:18px;background:#2a4060;flex-shrink:0;margin:0 2px}
+  .textbtns{display:flex;gap:4px;flex-wrap:wrap}
+  .tx{font-family:'Silkscreen',monospace;font-size:9px;padding:4px 8px;background:#111a30;color:#556677;border:1px solid #1a3050;border-radius:5px;cursor:pointer;transition:all .08s}
+  .tx:hover{transform:translateY(-1px);filter:brightness(1.3)}
+  .tx.on{background:#1a3858;color:#64dcc8;border-color:#2a5878;outline:2px solid #64dcc8;outline-offset:1px}
+  .slider-row{display:flex;align-items:center;gap:8px}
+  .slider-row input[type=range]{flex:1;accent-color:#64dcc8;height:6px}
+  .slider-val{color:#64dcc8;font-size:11px;min-width:40px;text-align:right}
+  .pet-name-row{display:flex;gap:6px;align-items:center;margin-top:4px}
+  .pet-name-row input{font-family:'Silkscreen',monospace;font-size:11px;padding:4px 8px;background:#111a30;color:#64dcc8;border:1px solid #1a3050;border-radius:6px;outline:none;flex:1}
+  .pet-name-row input::placeholder{color:#445566}
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000}
+  .modal{background:#111a30;border:2px solid #64dcc8;border-radius:14px;padding:20px;display:flex;flex-direction:column;align-items:center;gap:12px;max-width:90vw}
+  .modal .modal-title{color:#64dcc8;font-size:16px}
+  .modal img{image-rendering:pixelated;width:min(512px,85vw);height:auto;border:2px solid #1a3050;border-radius:8px}
+  .modal .hint{color:#8899aa;font-size:9px;text-align:center;line-height:1.6}
+  .modal .close-btn{font-family:'Silkscreen',monospace;font-size:11px;padding:6px 18px;background:#d35f5f;color:#fff;border:none;border-radius:8px;cursor:pointer}
+  ::-webkit-scrollbar{width:6px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:#64dcc8;border-radius:3px}
+  .desc-input{font-family:'Silkscreen',monospace;font-size:10px;margin-top:6px;padding:5px 10px;background:#111a30;color:#aabbcc;border:1px solid #1a3050;border-radius:6px;outline:none;width:min(95%,420px);resize:none;line-height:1.5;text-align:center}
+  .desc-input::placeholder{color:#445566}
+  .desc-display{display:none;margin-top:6px;padding:4px 14px;color:#8899aa;font-size:clamp(9px,1.8vw,11px);text-align:center;max-width:95%;line-height:1.5;word-wrap:break-word}
+  .view-mode .desc-display{display:block}
+  .view-mode .desc-display:empty{display:none}
+  .view-mode .desc-input{display:none}
+  .btn-edit{background:#27ae60;box-shadow:0 3px 10px #27ae6044;font-size:12px;padding:8px 20px;margin-top:10px}
+  .view-mode .topbar{display:none}
+  .view-mode .divider{display:none}
+  .view-mode .controls{display:none}
+  .view-mode .preview{width:100%!important;flex:1;justify-content:center;padding:20px}
+  .view-mode .scene{width:min(95%,560px);aspect-ratio:16/9}
+  .view-topbar{display:none;align-items:center;justify-content:center;gap:10px;padding:10px;border-bottom:1px solid #1a3050;flex-shrink:0}
+  .view-mode .view-topbar{display:flex}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <span class="title">⚔️ Character Builder</span>
+    <div style="flex:1;min-width:80px"><input id="nameInput" value="Hero" placeholder="Name..."></div>
+    <div class="btns"><button class="btn btn-rand" id="btnRandom">🎲 Random</button><button class="btn btn-share" id="btnShare">🔗 Share</button><button class="btn btn-save" id="btnSave">💾 Save</button></div>
+  </div>
+  <div class="main" id="mainArea">
+    <div class="preview" id="previewPanel">
+      <div class="scene"><canvas id="sceneCanvas" width="128" height="72"></canvas></div>
+      <div class="nameplate" id="nameplate">Hero</div>
+      <div class="desc-display" id="descDisplay"></div>
+      <textarea class="desc-input" id="descInput" rows="2" maxlength="200" placeholder="Add a description..."></textarea>
+      <button class="btn btn-edit" id="btnEdit" style="display:none">✏️ Edit Character</button>
+    </div>
+    <div class="divider" id="divider"></div>
+    <div class="controls"><div class="tabs" id="tabBar"></div><div class="options" id="optionsPanel"></div></div>
+  </div>
+</div>
+<div id="toast" class="toast">Link copied!</div>
+<div class="modal-bg" id="modal" style="display:none">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">Your Character</div>
+    <img id="modalImg" src="" alt="Character">
+    <div class="hint">Long-press the image and<br>choose "Save Image"</div>
+    <button class="close-btn" id="modalClose">Close</button>
+  </div>
+</div>
+<script>
+// ═══════════════════════════════════════════════════
+// RPG CHARACTER BUILDER v2 - Phase 2: Pets
+// ═══════════════════════════════════════════════════
+
+const SW=128,SH=72,CW=32,CH=32,GROUND_Y=60;
+
+// ─── Palettes ───
+const SKIN={Light:{base:"#f5c8a0",shade:"#d4a070",hi:"#ffe0c0"},Tan:{base:"#d4a060",shade:"#b08040",hi:"#e8c080"},Brown:{base:"#8b5e3c",shade:"#6b3e1c",hi:"#a07850"},Dark:{base:"#5c3a1e",shade:"#3c2a10",hi:"#7a5030"},Olive:{base:"#b8a878",shade:"#908060",hi:"#d0c090"},Pale:{base:"#ffe8d8",shade:"#e0c0a8",hi:"#fff0e8"},Zombie:{base:"#7a9a50",shade:"#5a7a30",hi:"#90b060"}};
+const HAIR_COLORS={Brown:{base:"#6b3a1a",shade:"#4a2510",hi:"#8a5030"},Black:{base:"#1a1a2e",shade:"#0a0a18",hi:"#2e2e48"},Blonde:{base:"#e0c060",shade:"#c0a040",hi:"#f0d880"},Red:{base:"#b03020",shade:"#802010",hi:"#d04830"},White:{base:"#d8d8e0",shade:"#b0b0c0",hi:"#f0f0f8"},Blue:{base:"#3060c0",shade:"#2040a0",hi:"#4878e0"},Green:{base:"#308030",shade:"#206020",hi:"#48a848"},Pink:{base:"#e06898",shade:"#c04878",hi:"#f088b0"},Purple:{base:"#7030a0",shade:"#502080",hi:"#9048c0"}};
+const CLOTH={Red:{base:"#c03030",shade:"#901818",hi:"#e04848"},Blue:{base:"#3050b0",shade:"#203888",hi:"#4868d0"},Green:{base:"#308838",shade:"#206820",hi:"#48a850"},Teal:{base:"#308888",shade:"#206868",hi:"#48a8a8"},Purple:{base:"#703098",shade:"#502078",hi:"#9048b8"},White:{base:"#d8d8e0",shade:"#b0b0c0",hi:"#f0f0f8"},Black:{base:"#2a2a38",shade:"#18182a",hi:"#404058"},Brown:{base:"#785030",shade:"#583818",hi:"#987048"},Orange:{base:"#d07020",shade:"#a05010",hi:"#e89038"},Yellow:{base:"#d0b020",shade:"#a89018",hi:"#e8c838"},Maroon:{base:"#702030",shade:"#501018",hi:"#903848"},Navy:{base:"#202860",shade:"#101848",hi:"#384078"},Gray:{base:"#787888",shade:"#585868",hi:"#9898a8"},Pink:{base:"#e06888",shade:"#c04868",hi:"#f888a8"}};
+const EYE={Blue:"#4488dd",Brown:"#885522",Green:"#44aa44",Gray:"#888899",Red:"#cc3333",Purple:"#8844cc",Gold:"#ccaa22",Black:"#222233"};
+const METAL={Steel:{base:"#a0a8b8",shade:"#707888",hi:"#c8d0e0"},Gold:{base:"#d0a830",shade:"#a08018",hi:"#e8c848"},Bronze:{base:"#b08030",shade:"#886018",hi:"#c89848"},Iron:{base:"#686878",shade:"#484858",hi:"#888898"}};
+
+// Pet colors
+const PET_COLORS={Golden:{base:"#d4a040",shade:"#a07820",hi:"#e8b858"},Brown:{base:"#8b5e3c",shade:"#6b3e1c",hi:"#a07850"},DarkBrown:{base:"#5a3820",shade:"#3a2010",hi:"#7a5838"},Black:{base:"#2a2a38",shade:"#18182a",hi:"#404058"},White:{base:"#e8e8e0",shade:"#c8c8c0",hi:"#f8f8f0"},Gray:{base:"#888898",shade:"#686878",hi:"#a8a8b0"},Tan:{base:"#c8a868",shade:"#a08848",hi:"#e0c080"},Cream:{base:"#e8d0a8",shade:"#c8b088",hi:"#f8e0c0"},Orange:{base:"#d88030",shade:"#b06018",hi:"#f0a048"},Chestnut:{base:"#a05828",shade:"#804018",hi:"#c07838"},Spotted:{base:"#e8e8e0",shade:"#2a2a38",hi:"#f8f8f0"},Tabby:{base:"#a07040",shade:"#604020",hi:"#c09060"},Ginger:{base:"#e08830",shade:"#c06818",hi:"#f0a850"},Russet:{base:"#c04820",shade:"#903010",hi:"#e06838"},Sandy:{base:"#d8c088",shade:"#b8a068",hi:"#f0d8a0"},Striped:{base:"#b88848",shade:"#503820",hi:"#d0a060"}};
+const FANTASY_COLORS={Purple:{base:"#7030a0",shade:"#502080",hi:"#9048c0"},Blue:{base:"#3060c0",shade:"#2040a0",hi:"#4878e0"},Green:{base:"#308830",shade:"#206820",hi:"#48a848"},Pink:{base:"#e06898",shade:"#c04878",hi:"#f088b0"},Red:{base:"#c03030",shade:"#901818",hi:"#e04848"},Gold:{base:"#d0a830",shade:"#a08018",hi:"#e8c848"},Teal:{base:"#308888",shade:"#206868",hi:"#48a8a8"},Silver:{base:"#a8b0c0",shade:"#808898",hi:"#c8d0e0"}};
+
+// ─── Pixel helpers ───
+function px(c,x,y,color){c.fillStyle=color;c.fillRect(x,y,1,1);}
+function rc(c,x,y,w,h,color){c.fillStyle=color;c.fillRect(x,y,w,h);}
+function tri(c,x1,y1,x2,y2,x3,y3,color){c.fillStyle=color;const minY=Math.floor(Math.min(y1,y2,y3)),maxY=Math.ceil(Math.max(y1,y2,y3));for(let y=minY;y<=maxY;y++){let xs=[];[[x1,y1,x2,y2],[x2,y2,x3,y3],[x3,y3,x1,y1]].forEach(([ax,ay,bx,by])=>{if(y>=Math.min(ay,by)&&y<=Math.max(ay,by)&&ay!==by)xs.push(Math.round(ax+(y-ay)*(bx-ax)/(by-ay)));});if(xs.length>=2){xs.sort((a,b)=>a-b);c.fillRect(xs[0],y,xs[xs.length-1]-xs[0]+1,1);}}}
+function hexToRgb(hex){return{r:parseInt(hex.slice(1,3),16),g:parseInt(hex.slice(3,5),16),b:parseInt(hex.slice(5,7),16)};}
+
+// ─── Character drawing (unchanged from v1) ───
+function drawBody(c,skin){const s=SKIN[skin];rc(c,12,2,8,1,s.base);rc(c,11,3,10,8,s.base);rc(c,12,11,8,1,s.base);rc(c,11,3,1,8,s.shade);rc(c,20,3,1,8,s.shade);rc(c,12,10,8,1,s.shade);rc(c,12,11,8,1,s.shade);rc(c,13,3,6,1,s.hi);px(c,12,3,s.hi);rc(c,14,12,4,1,s.base);rc(c,14,12,1,1,s.shade);rc(c,11,13,10,8,s.base);rc(c,11,13,1,8,s.shade);rc(c,20,13,1,8,s.shade);rc(c,11,20,10,1,s.shade);rc(c,8,13,3,8,s.base);rc(c,21,13,3,8,s.base);rc(c,8,13,1,8,s.shade);rc(c,23,13,1,8,s.shade);rc(c,8,20,3,1,s.shade);rc(c,21,20,3,1,s.shade);rc(c,8,21,3,2,s.base);rc(c,21,21,3,2,s.base);rc(c,8,22,3,1,s.shade);rc(c,21,22,3,1,s.shade);}
+function drawEyes(c,col){const v=EYE[col];rc(c,13,6,3,2,"#e8e8f0");rc(c,17,6,3,2,"#e8e8f0");rc(c,14,6,2,2,v);rc(c,18,6,2,2,v);px(c,14,6,"#fff");px(c,18,6,"#fff");px(c,13,6,"#000");px(c,15,6,"#000");px(c,17,6,"#000");px(c,19,6,"#000");}
+function drawMouth(c,skin){const s=SKIN[skin];px(c,14,9,s.shade);rc(c,15,9,2,1,"#c06060");px(c,17,9,s.shade);}
+function drawHair(c,style,color){if(style==="None")return;const h=HAIR_COLORS[color];if(style==="Short"){rc(c,11,1,10,3,h.base);rc(c,10,2,1,4,h.base);rc(c,21,2,1,4,h.base);rc(c,11,1,10,1,h.hi);rc(c,10,2,1,2,h.shade);rc(c,21,2,1,2,h.shade);}else if(style==="Messy"){rc(c,10,0,12,4,h.base);rc(c,10,2,1,5,h.base);rc(c,21,2,1,5,h.base);px(c,9,1,h.base);px(c,22,1,h.base);px(c,9,3,h.base);px(c,22,4,h.base);rc(c,10,0,12,1,h.hi);rc(c,10,4,1,3,h.shade);rc(c,21,4,1,3,h.shade);}else if(style==="Long"){rc(c,10,0,12,4,h.base);rc(c,10,2,2,16,h.base);rc(c,20,2,2,16,h.base);rc(c,10,0,12,1,h.hi);rc(c,10,4,1,14,h.shade);rc(c,21,4,1,14,h.shade);}else if(style==="Mohawk"){rc(c,14,-1,4,5,h.base);rc(c,13,2,6,2,h.base);rc(c,14,-1,4,1,h.hi);rc(c,15,-1,2,1,h.shade);}else if(style==="Ponytail"){rc(c,11,1,10,3,h.base);rc(c,10,2,1,4,h.base);rc(c,21,2,1,4,h.base);rc(c,20,6,2,10,h.base);rc(c,21,6,1,10,h.shade);rc(c,11,1,10,1,h.hi);}else if(style==="Curly"){rc(c,10,0,12,5,h.base);rc(c,9,2,1,5,h.base);rc(c,22,2,1,5,h.base);px(c,10,6,h.base);px(c,21,6,h.base);rc(c,10,0,12,1,h.hi);px(c,11,1,h.hi);px(c,13,1,h.hi);px(c,17,1,h.hi);px(c,19,1,h.hi);rc(c,9,5,1,2,h.shade);rc(c,22,5,1,2,h.shade);}else if(style==="Spiky"){rc(c,11,1,10,3,h.base);rc(c,10,2,1,4,h.base);rc(c,21,2,1,4,h.base);px(c,11,0,h.base);px(c,13,-1,h.base);px(c,14,0,h.base);px(c,16,-1,h.base);px(c,17,0,h.base);px(c,19,-1,h.base);px(c,20,0,h.base);px(c,13,-1,h.hi);px(c,16,-1,h.hi);px(c,19,-1,h.hi);}}
+function drawShirt(c,color){if(color==="None")return;const v=CLOTH[color];rc(c,11,13,10,8,v.base);rc(c,8,13,3,6,v.base);rc(c,21,13,3,6,v.base);rc(c,11,13,1,8,v.shade);rc(c,20,13,1,8,v.shade);rc(c,8,13,1,6,v.shade);rc(c,23,13,1,6,v.shade);rc(c,11,20,10,1,v.shade);rc(c,14,13,4,1,v.hi);rc(c,14,12,4,1,v.shade);px(c,15,13,v.shade);px(c,16,13,v.shade);}
+function drawPants(c,color){if(color==="None")return;const v=CLOTH[color];rc(c,11,21,5,7,v.base);rc(c,16,21,5,7,v.base);px(c,15,25,v.shade);px(c,16,25,v.shade);rc(c,11,21,1,7,v.shade);rc(c,20,21,1,7,v.shade);rc(c,11,27,5,1,v.shade);rc(c,16,27,5,1,v.shade);rc(c,11,21,10,1,v.shade);rc(c,13,22,2,1,v.hi);rc(c,17,22,2,1,v.hi);}
+function drawShoes(c,color){if(color==="None")return;const v=CLOTH[color];rc(c,10,28,6,2,v.base);rc(c,10,29,6,1,v.shade);px(c,10,28,v.shade);rc(c,11,28,4,1,v.hi);rc(c,16,28,6,2,v.base);rc(c,16,29,6,1,v.shade);px(c,21,28,v.shade);rc(c,17,28,4,1,v.hi);}
+function drawArmor(c,metal){if(metal==="None")return;const m=METAL[metal];rc(c,12,14,8,6,m.base);rc(c,12,14,1,6,m.shade);rc(c,19,14,1,6,m.shade);rc(c,12,19,8,1,m.shade);rc(c,14,14,4,1,m.hi);rc(c,8,13,3,2,m.base);rc(c,21,13,3,2,m.base);rc(c,8,13,3,1,m.hi);rc(c,21,13,3,1,m.hi);rc(c,8,14,1,1,m.shade);rc(c,23,14,1,1,m.shade);px(c,15,15,m.shade);px(c,16,15,m.shade);px(c,15,17,m.shade);px(c,16,17,m.shade);}
+function drawHelmet(c,metal){if(metal==="None")return;const m=METAL[metal];rc(c,11,1,10,4,m.base);rc(c,10,3,1,4,m.base);rc(c,21,3,1,4,m.base);rc(c,15,5,2,3,m.base);rc(c,10,5,1,2,m.shade);rc(c,21,5,1,2,m.shade);rc(c,11,1,10,1,m.hi);rc(c,15,5,2,1,m.hi);}
+function drawCrown(c,metal){if(metal==="None")return;const m=METAL[metal];rc(c,11,1,10,2,m.base);px(c,11,0,m.base);px(c,13,0,m.base);px(c,15,-1,m.base);px(c,16,-1,m.base);px(c,18,0,m.base);px(c,20,0,m.base);px(c,13,1,"#cc2222");px(c,15,0,"#2255cc");px(c,16,0,"#2255cc");px(c,18,1,"#22cc22");rc(c,12,1,8,1,m.hi);}
+function drawHood(c,color){if(color==="None")return;const v=CLOTH[color];rc(c,10,0,12,5,v.base);rc(c,9,3,1,6,v.base);rc(c,22,3,1,6,v.base);rc(c,10,0,12,1,v.hi);rc(c,9,7,1,2,v.shade);rc(c,22,7,1,2,v.shade);rc(c,10,5,1,6,v.shade);rc(c,21,5,1,6,v.shade);}
+function drawCape(c,color){if(color==="None")return;const v=CLOTH[color];rc(c,7,13,2,14,v.base);rc(c,23,13,2,14,v.base);rc(c,9,18,2,9,v.base);rc(c,21,18,2,9,v.base);rc(c,7,13,1,14,v.shade);rc(c,24,13,1,14,v.shade);rc(c,7,26,4,1,v.shade);rc(c,21,26,4,1,v.shade);rc(c,8,13,1,3,v.hi);rc(c,23,13,1,3,v.hi);}
+function drawSword(c){rc(c,6,5,1,12,"#c0c8d8");rc(c,7,5,1,12,"#a0a8b8");px(c,6,4,"#d0d8e8");px(c,7,4,"#d0d8e8");px(c,6,3,"#e0e8f0");rc(c,4,17,5,1,"#c8a030");px(c,4,17,"#a08020");rc(c,6,18,2,3,"#6b3a1a");px(c,6,19,"#8a5030");rc(c,6,21,2,1,"#c8a030");}
+function drawAxe(c){rc(c,6,8,1,14,"#6b3a1a");px(c,6,10,"#8a5030");px(c,6,14,"#8a5030");rc(c,3,6,4,4,"#a0a8b8");px(c,2,7,"#a0a8b8");px(c,2,8,"#a0a8b8");rc(c,3,6,4,1,"#c0c8d8");rc(c,3,9,4,1,"#707888");px(c,2,7,"#c0c8d8");}
+function drawStaff(c){rc(c,6,2,1,20,"#6b3a1a");px(c,6,5,"#8a5030");px(c,6,10,"#8a5030");px(c,6,15,"#8a5030");rc(c,5,0,3,3,"#6688dd");px(c,6,0,"#88aaff");px(c,5,2,"#4466aa");}
+function drawBow(c){const b="#6b3a1a",s="#999";[6,7].forEach(y=>px(c,3,y,b));px(c,4,8,b);[9,10,11,12,13].forEach(y=>px(c,5,y,b));px(c,4,14,b);[15,16].forEach(y=>px(c,3,y,b));[7,8,9,10,11,12,13,14,15].forEach(y=>px(c,6,y,s));}
+function drawShield(c,metal){if(metal==="None")return;const m=METAL[metal];rc(c,23,14,5,7,m.base);rc(c,24,13,3,1,m.base);rc(c,24,21,3,1,m.base);px(c,25,22,m.base);rc(c,27,14,1,7,m.shade);rc(c,24,21,3,1,m.shade);rc(c,24,14,1,3,m.hi);rc(c,24,13,3,1,m.hi);rc(c,25,15,1,4,m.shade);rc(c,24,17,3,1,m.shade);}
+function drawCharacter(canvas,o){const c=canvas.getContext("2d");c.imageSmoothingEnabled=false;c.clearRect(0,0,CW,CH);if(o.cape!=="None")drawCape(c,o.cape);drawBody(c,o.skin);drawEyes(c,o.eyes);drawMouth(c,o.skin);drawPants(c,o.pants);drawShoes(c,o.shoes);drawShirt(c,o.shirt);if(o.armor!=="None")drawArmor(c,o.armor);if(o.headgear==="Helmet")drawHelmet(c,o.headMetal);else if(o.headgear==="Crown")drawCrown(c,o.headMetal);else if(o.headgear==="Hood")drawHood(c,o.hoodColor);else drawHair(c,o.hairStyle,o.hairColor);if(o.weapon==="Sword")drawSword(c);else if(o.weapon==="Axe")drawAxe(c);else if(o.weapon==="Staff")drawStaff(c);else if(o.weapon==="Bow")drawBow(c);if(o.shield!=="None")drawShield(c,o.shield);}
+
+// ═══════════════════════════════════════════════════
+// PET DRAWING FUNCTIONS
+// All pets face LEFT by default, flipped when on left side.
+// Each has: pw, ph (canvas size), realFt (height in feet),
+// cat (category), realistic (color keys), draw function.
+// ═══════════════════════════════════════════════════
+
+const PETS = {};
+
+// ─── DOGS (8) ───
+PETS["Golden Retriever"]={pw:16,ph:14,realFt:2.0,cat:"Dogs",realistic:["Golden","Cream","Sandy","Brown"],
+  draw(c,col){
+    rc(c,4,4,8,5,col.base);rc(c,4,4,8,1,col.hi);rc(c,4,8,8,1,col.shade);
+    rc(c,1,2,5,5,col.base);rc(c,1,2,5,1,col.hi);
+    rc(c,0,5,2,2,col.hi);px(c,0,5,col.shade);px(c,2,3,"#111");
+    rc(c,0,4,1,3,col.shade);rc(c,5,4,1,3,col.shade);// floppy ears
+    rc(c,5,9,2,4,col.base);rc(c,10,9,2,4,col.base);rc(c,5,12,2,1,col.shade);rc(c,10,12,2,1,col.shade);
+    rc(c,12,3,2,4,col.base);px(c,13,2,col.hi);px(c,13,6,col.hi);//fluffy tail
+  }};
+PETS["German Shepherd"]={pw:16,ph:14,realFt:2.1,cat:"Dogs",realistic:["DarkBrown","Tan","Black"],
+  draw(c,col){
+    rc(c,4,4,8,5,col.base);rc(c,4,4,8,1,col.hi);rc(c,8,4,4,3,col.shade);//saddle
+    rc(c,1,2,5,5,col.base);rc(c,1,2,5,1,col.hi);
+    rc(c,0,5,2,2,col.hi);px(c,0,5,col.shade);px(c,2,3,"#111");
+    px(c,1,1,col.base);px(c,5,1,col.base);//pointed ears
+    rc(c,5,9,2,4,col.base);rc(c,10,9,2,4,col.base);rc(c,5,12,2,1,col.shade);rc(c,10,12,2,1,col.shade);
+    rc(c,12,5,1,4,col.base);px(c,12,4,col.shade);//tail down
+  }};
+PETS["Husky"]={pw:16,ph:14,realFt:1.8,cat:"Dogs",realistic:["Gray","White","Black","Brown"],
+  draw(c,col){
+    rc(c,4,4,8,5,col.base);rc(c,4,4,8,1,col.hi);
+    rc(c,1,2,5,5,col.base);rc(c,1,2,5,1,col.hi);rc(c,2,4,2,2,col.hi);//face mask
+    rc(c,0,5,2,2,col.hi);px(c,0,5,col.shade);px(c,2,3,"#4488dd");//blue eye
+    px(c,1,1,col.base);px(c,5,1,col.base);
+    rc(c,5,9,2,4,col.base);rc(c,10,9,2,4,col.base);rc(c,5,12,2,1,col.shade);rc(c,10,12,2,1,col.shade);
+    rc(c,12,4,1,3,col.base);px(c,13,4,col.base);//curl tail
+  }};
+PETS["Corgi"]={pw:14,ph:10,realFt:1.0,cat:"Dogs",realistic:["Orange","Tan","Golden","Cream"],
+  draw(c,col){
+    rc(c,3,3,8,3,col.base);rc(c,3,3,8,1,col.hi);
+    rc(c,0,1,5,4,col.base);rc(c,0,1,5,1,col.hi);rc(c,0,3,4,2,col.hi);//white face
+    px(c,0,4,col.shade);px(c,1,2,"#111");
+    px(c,0,0,col.base);px(c,4,0,col.base);//ears
+    rc(c,4,6,2,3,col.base);rc(c,9,6,2,3,col.base);rc(c,4,8,2,1,col.shade);rc(c,9,8,2,1,col.shade);
+    px(c,11,4,col.base);//stub tail
+  }};
+PETS["Poodle"]={pw:14,ph:14,realFt:1.5,cat:"Dogs",realistic:["White","Cream","Brown","Black","Gray"],
+  draw(c,col){
+    rc(c,4,4,6,5,col.base);rc(c,3,4,1,4,col.base);rc(c,10,4,1,4,col.base);rc(c,4,3,6,1,col.hi);
+    rc(c,1,1,5,4,col.base);rc(c,0,2,1,2,col.base);rc(c,6,2,1,2,col.base);rc(c,1,0,5,1,col.hi);
+    px(c,2,2,"#111");px(c,1,4,col.shade);
+    rc(c,5,9,2,3,col.base);rc(c,8,9,2,3,col.base);rc(c,5,11,3,2,col.base);rc(c,8,11,3,2,col.base);//pom legs
+    rc(c,10,3,2,2,col.base);px(c,11,2,col.hi);//pom tail
+  }};
+PETS["Dalmatian"]={pw:16,ph:14,realFt:2.0,cat:"Dogs",realistic:["Spotted","White"],
+  draw(c,col){
+    rc(c,4,4,8,5,col.base);rc(c,4,4,8,1,col.hi);
+    px(c,6,5,col.shade);px(c,9,5,col.shade);px(c,7,7,col.shade);px(c,10,6,col.shade);px(c,5,7,col.shade);//spots
+    rc(c,1,2,5,5,col.base);rc(c,1,2,5,1,col.hi);
+    rc(c,0,5,2,2,col.hi);px(c,0,5,col.shade);px(c,2,3,"#111");
+    rc(c,0,4,1,3,col.shade);rc(c,5,4,1,3,col.shade);
+    rc(c,5,9,2,4,col.base);rc(c,10,9,2,4,col.base);rc(c,5,12,2,1,col.shade);rc(c,10,12,2,1,col.shade);
+    rc(c,12,3,1,3,col.base);px(c,12,2,col.hi);//tail up
+  }};
+PETS["Bulldog"]={pw:14,ph:12,realFt:1.2,cat:"Dogs",realistic:["Tan","Brown","White","Cream"],
+  draw(c,col){
+    rc(c,4,4,7,4,col.base);rc(c,4,4,7,1,col.hi);rc(c,4,7,7,1,col.shade);
+    rc(c,1,2,5,5,col.base);rc(c,1,2,5,1,col.hi);rc(c,0,5,2,3,col.hi);//jowls
+    px(c,2,3,"#111");px(c,1,5,col.shade);
+    rc(c,5,8,2,3,col.base);rc(c,9,8,2,3,col.base);rc(c,5,10,2,1,col.shade);rc(c,9,10,2,1,col.shade);
+    px(c,11,5,col.base);//stub tail
+  }};
+PETS["Chihuahua"]={pw:10,ph:10,realFt:0.7,cat:"Dogs",realistic:["Tan","Cream","Brown","Black","White"],
+  draw(c,col){
+    rc(c,3,4,4,3,col.base);rc(c,3,4,4,1,col.hi);
+    rc(c,1,1,4,4,col.base);rc(c,1,1,4,1,col.hi);
+    px(c,0,0,col.base);px(c,4,0,col.base);px(c,1,0,col.base);px(c,3,0,col.base);//big ears
+    px(c,2,2,"#111");px(c,1,4,col.shade);
+    rc(c,4,7,1,2,col.base);rc(c,6,7,1,2,col.base);rc(c,4,8,1,1,col.shade);rc(c,6,8,1,1,col.shade);
+    rc(c,7,4,1,2,col.base);px(c,7,3,col.base);//tail up
+  }};
+
+// ─── CATS (6) ───
+function catBase(c,col){
+  rc(c,3,3,5,3,col.base);rc(c,3,3,5,1,col.hi);
+  rc(c,1,1,3,3,col.base);rc(c,1,1,3,1,col.hi);
+  px(c,1,0,col.base);px(c,3,0,col.base);//pointed ears
+  px(c,1,3,col.shade);//nose
+  rc(c,4,6,1,3,col.base);rc(c,6,6,1,3,col.base);rc(c,4,8,1,1,col.shade);rc(c,6,8,1,1,col.shade);
+  rc(c,8,3,1,3,col.base);px(c,9,3,col.base);px(c,9,2,col.shade);//tail
+}
+PETS["Tabby"]={pw:12,ph:10,realFt:0.8,cat:"Cats",realistic:["Tabby","Orange","Brown","Gray"],
+  draw(c,col){catBase(c,col);px(c,2,2,"#44cc44");px(c,5,4,col.shade);px(c,7,4,col.shade);}};
+PETS["Siamese"]={pw:12,ph:10,realFt:0.85,cat:"Cats",realistic:["Cream","Tan","White"],
+  draw(c,col){catBase(c,col);rc(c,1,2,3,2,col.shade);px(c,2,2,"#3388dd");rc(c,4,8,1,1,col.shade);rc(c,6,8,1,1,col.shade);}};
+PETS["Persian"]={pw:12,ph:10,realFt:0.8,cat:"Cats",realistic:["White","Cream","Gray","Orange"],
+  draw(c,col){
+    rc(c,3,3,5,3,col.base);rc(c,2,3,1,3,col.base);rc(c,8,3,1,3,col.base);rc(c,3,3,5,1,col.hi);//fluffy
+    rc(c,1,1,4,3,col.base);rc(c,0,1,1,2,col.base);rc(c,5,1,1,2,col.base);rc(c,1,0,4,1,col.hi);
+    px(c,1,0,col.base);px(c,4,0,col.base);px(c,2,2,"#44cc44");px(c,1,3,col.shade);
+    rc(c,4,6,1,3,col.base);rc(c,6,6,1,3,col.base);
+    rc(c,8,3,2,3,col.base);px(c,9,2,col.base);px(c,10,2,col.shade);//fluffy tail
+  }};
+PETS["Black Cat"]={pw:12,ph:10,realFt:0.8,cat:"Cats",realistic:["Black","DarkBrown"],
+  draw(c,col){catBase(c,col);px(c,2,2,"#cccc22");}};
+PETS["Orange Cat"]={pw:12,ph:10,realFt:0.85,cat:"Cats",realistic:["Ginger","Orange","Cream"],
+  draw(c,col){catBase(c,col);px(c,2,2,"#44cc44");px(c,5,4,col.shade);px(c,7,3,col.shade);}};
+PETS["Calico"]={pw:12,ph:10,realFt:0.8,cat:"Cats",realistic:["White","Cream"],
+  draw(c,col){catBase(c,col);px(c,2,2,"#44cc44");px(c,4,3,"#d88030");px(c,6,4,"#d88030");px(c,5,5,"#333");px(c,7,3,"#333");}};
+
+// ─── FARM (6) ───
+PETS["Horse"]={pw:22,ph:22,realFt:5.0,cat:"Farm",realistic:["Brown","Chestnut","Black","White","Gray","DarkBrown"],
+  draw(c,col){
+    rc(c,6,8,10,7,col.base);rc(c,6,8,10,1,col.hi);rc(c,6,14,10,1,col.shade);
+    rc(c,3,4,5,6,col.base);rc(c,3,4,5,1,col.hi);
+    rc(c,0,2,5,4,col.base);rc(c,0,2,5,1,col.hi);px(c,2,3,"#111");px(c,0,5,col.shade);px(c,1,5,col.shade);
+    px(c,1,1,col.base);px(c,4,1,col.base);rc(c,4,2,1,6,col.shade);px(c,5,3,col.shade);//mane
+    rc(c,7,15,2,6,col.base);rc(c,7,20,2,1,"#333");rc(c,14,15,2,6,col.base);rc(c,14,20,2,1,"#333");
+    rc(c,16,9,1,5,col.shade);rc(c,17,10,1,4,col.shade);//tail
+  }};
+PETS["Chicken"]={pw:10,ph:10,realFt:1.3,cat:"Farm",realistic:["White","Brown","Orange","Cream"],
+  draw(c,col){
+    rc(c,3,3,4,4,col.base);rc(c,3,3,4,1,col.hi);
+    rc(c,1,2,3,3,col.base);rc(c,1,2,3,1,col.hi);px(c,1,3,"#111");
+    px(c,0,3,"#e8a830");px(c,0,4,"#e8a830");//beak
+    px(c,2,1,"#cc2222");px(c,2,2,"#cc2222");//comb
+    px(c,1,4,"#cc2222");//wattle
+    rc(c,4,7,1,2,"#e8a830");rc(c,6,7,1,2,"#e8a830");
+    rc(c,7,4,2,2,col.base);px(c,8,3,col.hi);//tail
+  }};
+PETS["Pig"]={pw:14,ph:12,realFt:2.0,cat:"Farm",realistic:["Cream","Tan","Brown","Spotted"],
+  draw(c,col){
+    const pc=col.base?col:{base:"#e8a0a0",shade:"#c88080",hi:"#f0c0c0"};
+    rc(c,4,4,7,5,pc.base);rc(c,4,4,7,1,pc.hi);rc(c,4,8,7,1,pc.shade);
+    rc(c,1,3,5,4,pc.base);rc(c,1,3,5,1,pc.hi);rc(c,0,5,2,2,pc.hi);
+    px(c,0,5,"#c07070");px(c,0,6,"#c07070");px(c,2,4,"#111");
+    px(c,2,2,pc.base);px(c,4,2,pc.base);px(c,2,1,pc.shade);px(c,4,1,pc.shade);
+    rc(c,5,9,2,2,pc.base);rc(c,9,9,2,2,pc.base);rc(c,5,10,2,1,pc.shade);rc(c,9,10,2,1,pc.shade);
+    px(c,11,5,pc.base);px(c,12,4,pc.base);//curly tail
+  }};
+PETS["Sheep"]={pw:16,ph:14,realFt:2.5,cat:"Farm",realistic:["White","Cream","Gray","Brown"],
+  draw(c,col){
+    rc(c,4,4,8,5,col.base);rc(c,3,5,1,3,col.base);rc(c,12,5,1,3,col.base);rc(c,5,3,6,1,col.hi);rc(c,4,4,8,1,col.hi);
+    rc(c,1,3,4,4,"#444");rc(c,1,3,4,1,"#555");px(c,2,4,"#eee");px(c,1,6,"#333");
+    px(c,1,2,col.base);px(c,4,2,col.base);
+    rc(c,5,9,1,4,"#444");rc(c,10,9,1,4,"#444");rc(c,5,12,2,1,"#333");rc(c,10,12,2,1,"#333");
+    rc(c,12,5,2,2,col.base);
+  }};
+PETS["Cow"]={pw:20,ph:18,realFt:4.5,cat:"Farm",realistic:["Spotted","White","Brown","Black"],
+  draw(c,col){
+    rc(c,5,6,10,7,col.base);rc(c,5,6,10,1,col.hi);rc(c,5,12,10,1,col.shade);
+    rc(c,8,7,3,2,col.shade);rc(c,12,8,2,3,col.shade);px(c,7,10,col.shade);//spots
+    rc(c,1,4,6,5,col.base);rc(c,1,4,6,1,col.hi);rc(c,0,7,2,2,col.hi);
+    px(c,0,7,"#b08080");px(c,0,8,"#b08080");px(c,2,5,"#111");
+    px(c,2,3,"#d8d0b0");px(c,5,3,"#d8d0b0");px(c,2,2,"#c8c0a0");px(c,5,2,"#c8c0a0");//horns
+    px(c,1,3,col.base);px(c,6,3,col.base);
+    rc(c,6,13,2,4,col.base);rc(c,13,13,2,4,col.base);rc(c,6,16,2,1,"#444");rc(c,13,16,2,1,"#444");
+    rc(c,9,12,3,1,col.hi);//udder
+    rc(c,15,7,1,5,col.base);px(c,15,12,col.shade);px(c,16,12,col.shade);
+  }};
+PETS["Goat"]={pw:16,ph:14,realFt:2.5,cat:"Farm",realistic:["White","Brown","Gray","Tan","Black"],
+  draw(c,col){
+    rc(c,4,5,8,4,col.base);rc(c,4,5,8,1,col.hi);
+    rc(c,1,3,5,4,col.base);rc(c,1,3,5,1,col.hi);px(c,2,4,"#111");px(c,1,6,col.shade);
+    rc(c,1,6,2,2,col.hi);px(c,1,8,col.shade);//beard
+    px(c,2,2,"#c8c0a0");px(c,4,2,"#c8c0a0");px(c,2,1,"#d8d0b0");px(c,4,1,"#d8d0b0");//horns
+    rc(c,5,9,2,4,col.base);rc(c,10,9,2,4,col.base);rc(c,5,12,2,1,"#444");rc(c,10,12,2,1,"#444");
+    px(c,12,5,col.base);px(c,12,4,col.shade);
+  }};
+
+// ─── WILD (6) ───
+PETS["Wolf"]={pw:18,ph:14,realFt:2.5,cat:"Wild",realistic:["Gray","DarkBrown","White","Black"],
+  draw(c,col){
+    rc(c,5,5,8,5,col.base);rc(c,5,5,8,1,col.hi);rc(c,5,9,8,1,col.shade);
+    rc(c,1,3,6,5,col.base);rc(c,1,3,6,1,col.hi);rc(c,3,4,3,2,col.hi);//lighter face
+    px(c,0,6,col.shade);px(c,1,6,col.shade);px(c,2,4,"#dd8822");px(c,0,7,col.shade);
+    px(c,1,2,col.base);px(c,5,2,col.base);px(c,1,1,col.shade);px(c,5,1,col.shade);
+    rc(c,6,10,2,3,col.base);rc(c,11,10,2,3,col.base);rc(c,6,12,2,1,col.shade);rc(c,11,12,2,1,col.shade);
+    rc(c,13,6,2,4,col.base);px(c,14,5,col.shade);px(c,15,5,col.shade);//bushy tail
+  }};
+PETS["Bald Eagle"]={pw:16,ph:14,realFt:2.5,cat:"Wild",realistic:["DarkBrown","Brown"],
+  draw(c,col){
+    rc(c,4,5,7,5,col.base);rc(c,4,5,7,1,col.hi);
+    rc(c,1,2,5,4,"#e8e8e0");rc(c,1,2,5,1,"#f8f8f0");//white head
+    px(c,0,4,"#e8a830");px(c,0,5,"#e8a830");//beak
+    px(c,2,3,"#111");
+    rc(c,3,4,2,5,col.base);rc(c,10,4,2,5,col.base);px(c,2,5,col.shade);px(c,12,5,col.shade);//wings
+    rc(c,11,6,2,3,"#e8e8e0");//white tail
+    rc(c,6,10,1,3,"#e8a830");rc(c,9,10,1,3,"#e8a830");
+    px(c,5,12,"#e8a830");px(c,7,12,"#e8a830");px(c,8,12,"#e8a830");px(c,10,12,"#e8a830");
+  }};
+PETS["Gorilla"]={pw:18,ph:20,realFt:5.5,cat:"Wild",realistic:["Black","DarkBrown","Gray"],
+  draw(c,col){
+    rc(c,5,4,8,10,col.base);rc(c,5,4,8,1,col.hi);rc(c,7,6,4,3,col.hi);//silver back
+    rc(c,3,1,6,5,col.base);rc(c,3,1,6,1,col.hi);rc(c,4,4,4,2,col.shade);
+    px(c,5,3,"#111");px(c,7,3,"#111");px(c,6,5,col.shade);
+    rc(c,2,6,3,8,col.base);rc(c,13,6,3,8,col.base);rc(c,1,13,3,2,col.shade);rc(c,14,13,3,2,col.shade);
+    rc(c,6,14,3,5,col.base);rc(c,10,14,3,5,col.base);rc(c,6,18,3,1,col.shade);rc(c,10,18,3,1,col.shade);
+  }};
+PETS["Zebra"]={pw:20,ph:18,realFt:4.5,cat:"Wild",realistic:["Striped","White"],
+  draw(c,col){
+    rc(c,5,6,10,6,col.base);rc(c,5,6,10,1,col.hi);
+    for(let i=0;i<5;i++)rc(c,5+i*2,7,1,4,col.shade);//stripes
+    rc(c,1,3,6,5,col.base);rc(c,1,3,6,1,col.hi);rc(c,2,4,1,3,col.shade);rc(c,4,3,1,4,col.shade);
+    px(c,2,4,"#111");px(c,1,6,col.shade);px(c,2,2,col.base);px(c,5,2,col.base);
+    rc(c,4,2,1,4,"#222");//mane
+    rc(c,6,12,2,5,col.base);rc(c,13,12,2,5,col.base);
+    rc(c,6,12,1,5,col.shade);rc(c,13,12,1,5,col.shade);//leg stripes
+    rc(c,6,16,2,1,"#333");rc(c,13,16,2,1,"#333");
+    rc(c,15,7,1,4,col.base);px(c,15,11,"#222");px(c,16,11,"#222");
+  }};
+PETS["Fox"]={pw:14,ph:12,realFt:1.3,cat:"Wild",realistic:["Russet","Orange","Brown","Sandy"],
+  draw(c,col){
+    rc(c,4,4,6,4,col.base);rc(c,4,4,6,1,col.hi);
+    rc(c,1,2,5,4,col.base);rc(c,1,2,5,1,col.hi);
+    px(c,0,1,col.base);px(c,5,1,col.base);px(c,0,0,col.shade);px(c,5,0,col.shade);//big ears
+    rc(c,2,4,2,2,col.hi);px(c,2,3,"#111");px(c,0,5,col.shade);
+    rc(c,5,8,2,3,col.base);rc(c,8,8,2,3,col.base);rc(c,5,10,2,1,col.shade);rc(c,8,10,2,1,col.shade);
+    rc(c,10,4,2,4,col.base);rc(c,11,3,2,3,col.base);px(c,12,3,col.hi);px(c,12,4,col.hi);//white tip tail
+  }};
+PETS["Deer"]={pw:18,ph:18,realFt:3.5,cat:"Wild",realistic:["Brown","Tan","Chestnut","Sandy"],
+  draw(c,col){
+    rc(c,5,7,8,5,col.base);rc(c,5,7,8,1,col.hi);
+    rc(c,2,3,5,5,col.base);rc(c,2,3,5,1,col.hi);rc(c,3,5,3,2,col.hi);//lighter face
+    px(c,3,4,"#111");px(c,2,6,col.shade);px(c,7,8,col.hi);px(c,9,9,col.hi);px(c,11,8,col.hi);//spots
+    px(c,3,2,col.shade);px(c,5,2,col.shade);px(c,2,1,col.shade);px(c,6,1,col.shade);
+    px(c,2,0,col.shade);px(c,6,0,col.shade);px(c,1,0,col.shade);px(c,7,0,col.shade);//antlers
+    px(c,2,2,col.base);px(c,6,2,col.base);
+    rc(c,6,12,2,5,col.base);rc(c,11,12,2,5,col.base);rc(c,6,16,2,1,"#444");rc(c,11,16,2,1,"#444");
+    px(c,13,8,col.hi);px(c,13,9,col.base);
+  }};
+
+// ─── SMALL (4) ───
+PETS["Hamster"]={pw:8,ph:7,realFt:0.25,cat:"Small",realistic:["Golden","Cream","Brown","White","Orange"],
+  draw(c,col){
+    rc(c,2,2,4,3,col.base);rc(c,2,2,4,1,col.hi);
+    rc(c,1,1,3,3,col.base);rc(c,1,1,3,1,col.hi);
+    px(c,1,0,col.base);px(c,3,0,col.base);px(c,2,2,"#111");px(c,1,3,col.shade);
+    rc(c,1,3,2,1,col.hi);//cheek pouch
+    rc(c,3,5,1,1,col.base);rc(c,5,5,1,1,col.base);px(c,6,3,col.base);
+  }};
+PETS["Rabbit"]={pw:10,ph:12,realFt:0.8,cat:"Small",realistic:["White","Brown","Gray","Black","Cream","Tan"],
+  draw(c,col){
+    rc(c,3,5,4,4,col.base);rc(c,3,5,4,1,col.hi);
+    rc(c,2,3,3,3,col.base);rc(c,2,3,3,1,col.hi);
+    rc(c,2,0,1,3,col.base);rc(c,4,0,1,3,col.base);px(c,2,1,col.shade);px(c,4,1,col.shade);//long ears
+    px(c,3,4,"#111");px(c,2,5,col.shade);px(c,1,5,col.hi);
+    rc(c,3,9,2,2,col.base);rc(c,5,9,2,2,col.base);rc(c,3,10,2,1,col.shade);rc(c,5,10,2,1,col.shade);
+    rc(c,3,8,1,1,col.base);rc(c,6,8,1,1,col.base);rc(c,7,6,2,2,col.hi);//fluffy tail
+  }};
+PETS["Turtle"]={pw:10,ph:8,realFt:0.5,cat:"Small",realistic:["Brown","DarkBrown"],
+  draw(c,col){
+    const tc=col.shade?col:{base:"#508848",shade:"#306828",hi:"#68a860"};
+    rc(c,3,2,5,4,tc.base);rc(c,3,2,5,1,tc.hi);rc(c,4,3,3,2,tc.shade);px(c,5,2,tc.shade);px(c,6,4,tc.shade);
+    rc(c,1,3,2,2,tc.hi);px(c,1,4,"#111");
+    rc(c,2,6,2,1,tc.hi);rc(c,6,6,2,1,tc.hi);px(c,8,4,tc.base);
+  }};
+PETS["Parrot"]={pw:10,ph:12,realFt:1.0,cat:"Small",realistic:["Brown","Orange"],
+  draw(c,col){
+    const pc=col.shade?col:{base:"#308830",shade:"#206820",hi:"#48a848"};
+    rc(c,3,3,4,5,pc.base);rc(c,3,3,4,1,pc.hi);rc(c,3,5,2,2,pc.hi);//chest
+    rc(c,2,1,3,3,pc.base);rc(c,2,1,3,1,pc.hi);px(c,1,3,"#e8a830");px(c,1,4,"#d09020");//beak
+    px(c,3,2,"#111");rc(c,5,4,2,3,pc.shade);px(c,6,4,pc.hi);//wing
+    rc(c,4,8,2,3,pc.base);rc(c,5,8,1,3,pc.shade);px(c,4,10,pc.hi);//tail
+    rc(c,3,7,1,2,"#666");rc(c,5,7,1,2,"#666");px(c,2,8,"#666");px(c,6,8,"#666");
+  }};
+
+// ─── MYTHOLOGICAL (10) ───
+PETS["Dragon"]={pw:28,ph:26,realFt:12.0,cat:"Mythological",realistic:["DarkBrown","Black"],
+  draw(c,col){
+    const dc=col.shade?col:{base:"#308830",shade:"#206820",hi:"#48a848"};
+    rc(c,8,10,12,8,dc.base);rc(c,8,10,12,1,dc.hi);rc(c,8,17,12,1,dc.shade);rc(c,10,14,8,3,dc.hi);//belly
+    rc(c,3,5,7,7,dc.base);rc(c,3,5,7,1,dc.hi);
+    rc(c,0,2,6,5,dc.base);rc(c,0,2,6,1,dc.hi);px(c,2,3,"#ee4422");rc(c,0,6,2,2,dc.shade);px(c,0,5,dc.shade);
+    px(c,1,1,"#c8c0a0");px(c,4,1,"#c8c0a0");px(c,1,0,"#d8d0b0");px(c,4,0,"#d8d0b0");//horns
+    px(c,5,4,dc.shade);px(c,8,9,dc.shade);px(c,11,9,dc.shade);px(c,14,9,dc.shade);px(c,17,9,dc.shade);//spikes
+    rc(c,10,3,8,4,dc.base);rc(c,18,3,4,3,dc.base);rc(c,10,3,8,1,dc.hi);rc(c,18,3,4,1,dc.hi);
+    rc(c,12,4,1,6,dc.shade);rc(c,16,4,1,5,dc.shade);//wing bones
+    rc(c,9,18,3,6,dc.base);rc(c,16,18,3,6,dc.base);rc(c,9,23,4,2,dc.shade);rc(c,16,23,4,2,dc.shade);
+    rc(c,20,12,3,3,dc.base);rc(c,22,11,3,2,dc.base);rc(c,24,10,3,2,dc.base);px(c,26,10,dc.shade);px(c,26,11,dc.shade);//tail
+  }};
+PETS["Phoenix"]={pw:20,ph:18,realFt:4.0,cat:"Mythological",realistic:["Orange","Golden"],
+  draw(c,col){
+    const pc=col.shade?col:{base:"#c03030",shade:"#901818",hi:"#e04848"};
+    rc(c,6,6,7,6,pc.base);rc(c,6,6,7,1,pc.hi);
+    rc(c,2,3,5,4,pc.base);rc(c,2,3,5,1,pc.hi);px(c,3,4,"#fff");px(c,1,5,"#e8a830");
+    px(c,3,2,pc.hi);px(c,4,1,pc.hi);px(c,5,1,pc.base);px(c,5,0,pc.hi);//crest
+    rc(c,5,3,4,6,pc.base);rc(c,9,2,5,5,pc.hi);rc(c,14,2,3,4,"#e8a830");px(c,16,1,"#e8c838");//wings
+    rc(c,3,5,3,5,pc.base);rc(c,1,4,3,4,pc.hi);
+    rc(c,13,8,3,4,pc.base);rc(c,15,7,3,5,pc.hi);rc(c,17,6,2,5,"#e8a830");px(c,18,5,"#e8c838");px(c,19,6,"#e8c838");//tail
+    rc(c,8,12,1,4,"#e8a830");rc(c,11,12,1,4,"#e8a830");
+    px(c,7,15,"#e8a830");px(c,9,15,"#e8a830");px(c,10,15,"#e8a830");px(c,12,15,"#e8a830");
+    px(c,14,1,"#ffee44");px(c,18,4,"#ffee44");px(c,4,0,"#ffee44");//fire glow
+  }};
+PETS["Unicorn"]={pw:22,ph:22,realFt:5.0,cat:"Mythological",realistic:["White","Cream"],
+  draw(c,col){
+    const uc=col.shade?col:{base:"#e8e8e0",shade:"#c8c8c0",hi:"#f8f8f0"};
+    rc(c,6,8,10,7,uc.base);rc(c,6,8,10,1,uc.hi);rc(c,6,14,10,1,uc.shade);
+    rc(c,3,4,5,6,uc.base);rc(c,3,4,5,1,uc.hi);
+    rc(c,1,2,5,4,uc.base);rc(c,1,2,5,1,uc.hi);px(c,2,3,"#8844cc");px(c,1,5,uc.shade);
+    px(c,2,1,uc.base);px(c,5,1,uc.base);
+    px(c,3,0,"#d0a830");px(c,3,-1,"#e8c848");px(c,3,-2,"#ffdd55");//horn
+    rc(c,4,2,1,6,"#cc88ee");px(c,5,3,"#88bbff");px(c,5,5,"#ff88aa");//rainbow mane
+    rc(c,7,15,2,6,uc.base);rc(c,14,15,2,6,uc.base);rc(c,7,20,2,1,"#d0a830");rc(c,14,20,2,1,"#d0a830");//golden hooves
+    rc(c,16,9,2,5,"#cc88ee");px(c,17,8,"#88bbff");px(c,18,10,"#ff88aa");px(c,17,13,"#88ee88");//rainbow tail
+  }};
+PETS["Griffin"]={pw:22,ph:20,realFt:6.0,cat:"Mythological",realistic:["Golden","Brown","DarkBrown","Tan"],
+  draw(c,col){
+    rc(c,6,7,10,7,col.base);rc(c,6,7,10,1,col.hi);
+    rc(c,2,3,6,6,col.base);rc(c,2,3,6,1,col.hi);px(c,3,4,"#dd8822");
+    rc(c,0,5,3,2,"#e8a830");px(c,0,5,"#d09020");//beak
+    px(c,2,2,col.base);px(c,6,2,col.base);
+    rc(c,8,2,6,6,col.base);rc(c,14,2,4,5,col.hi);rc(c,18,3,2,3,col.hi);//wings
+    rc(c,8,2,6,1,"#ddd");rc(c,10,3,1,5,col.shade);rc(c,14,3,1,4,col.shade);
+    rc(c,7,14,2,5,"#e8a830");rc(c,12,14,2,5,"#e8a830");//eagle talons
+    rc(c,6,18,3,1,"#d09020");rc(c,11,18,3,1,"#d09020");
+    rc(c,16,9,2,3,col.base);rc(c,17,8,2,2,col.shade);//tufted tail
+  }};
+PETS["Minotaur"]={pw:20,ph:22,realFt:7.0,cat:"Mythological",realistic:["Brown","DarkBrown","Tan","Black"],
+  draw(c,col){
+    rc(c,6,6,8,10,col.base);rc(c,6,6,8,1,col.hi);
+    rc(c,4,1,8,6,col.base);rc(c,4,1,8,1,col.hi);
+    px(c,6,3,"#cc2222");rc(c,5,5,6,2,col.shade);px(c,6,6,col.shade);px(c,9,6,col.shade);//nostrils
+    rc(c,3,0,2,2,"#c8c0a0");px(c,2,-1,"#d8d0b0");rc(c,11,0,2,2,"#c8c0a0");px(c,13,-1,"#d8d0b0");//horns
+    rc(c,3,7,3,7,col.base);rc(c,14,7,3,7,col.base);rc(c,2,13,3,2,col.shade);rc(c,15,13,3,2,col.shade);//arms
+    rc(c,7,16,3,5,col.base);rc(c,11,16,3,5,col.base);rc(c,7,20,3,1,"#444");rc(c,11,20,3,1,"#444");//hooves
+    rc(c,6,14,8,2,"#6a4020");rc(c,6,14,8,1,"#8a5830");//belt
+    px(c,7,6,"#d0a830");px(c,8,6,"#d0a830");//nose ring
+  }};
+PETS["Cerberus"]={pw:20,ph:16,realFt:4.0,cat:"Mythological",realistic:["Black","DarkBrown","Gray"],
+  draw(c,col){
+    rc(c,5,6,10,5,col.base);rc(c,5,6,10,1,col.hi);
+    rc(c,0,2,4,5,col.base);rc(c,0,2,4,1,col.hi);//left head
+    rc(c,2,0,4,4,col.base);rc(c,2,0,4,1,col.hi);//center head
+    rc(c,4,2,4,5,col.base);rc(c,4,2,4,1,col.hi);//right head
+    px(c,1,3,"#cc2222");px(c,3,1,"#cc2222");px(c,5,3,"#cc2222");//eyes
+    px(c,0,5,"#cc4444");px(c,2,3,"#cc4444");px(c,4,5,"#cc4444");//mouths
+    rc(c,5,5,10,1,"#888");px(c,6,4,"#aaa");px(c,9,4,"#aaa");px(c,12,4,"#aaa");//spiked collar
+    rc(c,6,11,2,4,col.base);rc(c,12,11,2,4,col.base);rc(c,6,14,2,1,col.shade);rc(c,12,14,2,1,col.shade);
+    rc(c,15,7,2,3,col.base);rc(c,16,6,2,2,col.shade);px(c,18,6,col.shade);//serpent tail
+  }};
+PETS["Pegasus"]={pw:24,ph:22,realFt:5.5,cat:"Mythological",realistic:["White","Cream","Gray"],
+  draw(c,col){
+    const pc=col.shade?col:{base:"#e8e8e0",shade:"#c8c8c0",hi:"#f8f8f0"};
+    rc(c,7,10,10,6,pc.base);rc(c,7,10,10,1,pc.hi);
+    rc(c,3,6,6,6,pc.base);rc(c,3,6,6,1,pc.hi);
+    rc(c,1,4,5,4,pc.base);rc(c,1,4,5,1,pc.hi);px(c,2,5,"#3388dd");px(c,1,7,pc.shade);
+    px(c,2,3,pc.base);px(c,5,3,pc.base);rc(c,5,4,1,5,pc.shade);//mane
+    rc(c,9,3,8,5,pc.base);rc(c,17,2,4,4,pc.hi);rc(c,21,3,2,3,pc.hi);//wings
+    rc(c,9,3,8,1,"#fff");rc(c,17,2,4,1,"#fff");
+    rc(c,11,4,1,4,pc.shade);rc(c,15,4,1,3,pc.shade);rc(c,19,3,1,2,pc.shade);
+    rc(c,8,16,2,5,pc.base);rc(c,15,16,2,5,pc.base);rc(c,8,20,2,1,"#d0a830");rc(c,15,20,2,1,"#d0a830");
+    rc(c,17,11,2,4,pc.base);rc(c,18,10,2,4,pc.hi);//flowing tail
+  }};
+PETS["Basilisk"]={pw:18,ph:14,realFt:3.0,cat:"Mythological",realistic:["DarkBrown","Gray"],
+  draw(c,col){
+    const bc=col.shade?col:{base:"#508848",shade:"#306828",hi:"#68a860"};
+    rc(c,4,5,10,4,bc.base);rc(c,4,5,10,1,bc.hi);rc(c,5,8,8,1,bc.hi);//belly
+    rc(c,1,3,5,4,bc.base);rc(c,1,3,5,1,bc.hi);px(c,2,4,"#cc2222");px(c,1,6,bc.shade);
+    px(c,2,2,"#e8c838");px(c,3,1,"#e8c838");px(c,4,2,"#e8c838");//crown
+    for(let i=0;i<4;i++)px(c,5+i*2,6,bc.shade);//scales
+    rc(c,8,9,5,3,bc.base);rc(c,12,8,3,3,bc.base);rc(c,8,9,5,1,bc.shade);
+    rc(c,14,7,2,2,bc.base);rc(c,15,6,2,2,bc.shade);//tail
+    rc(c,5,9,2,3,bc.base);rc(c,10,9,2,3,bc.base);rc(c,5,11,2,1,bc.shade);rc(c,10,11,2,1,bc.shade);
+  }};
+PETS["Kitsune"]={pw:16,ph:14,realFt:2.0,cat:"Mythological",realistic:["White","Golden","Russet","Orange"],
+  draw(c,col){
+    rc(c,4,5,7,4,col.base);rc(c,4,5,7,1,col.hi);
+    rc(c,1,2,5,5,col.base);rc(c,1,2,5,1,col.hi);rc(c,2,4,3,2,col.hi);//white face
+    px(c,1,0,col.base);px(c,5,0,col.base);px(c,1,1,col.shade);px(c,5,1,col.shade);
+    px(c,0,0,col.shade);px(c,6,0,col.shade);//big ears
+    px(c,2,3,"#dd8822");px(c,1,5,col.shade);
+    rc(c,11,3,2,5,col.base);rc(c,12,2,2,4,col.hi);rc(c,13,3,2,4,col.base);//3 tails
+    px(c,12,1,col.hi);px(c,14,2,col.hi);//glowing tips
+    rc(c,5,9,2,4,col.base);rc(c,9,9,2,4,col.base);rc(c,5,12,2,1,col.shade);rc(c,9,12,2,1,col.shade);
+    px(c,0,3,"#88ccff");px(c,8,2,"#88ccff");//fox fire
+  }};
+PETS["Hydra"]={pw:24,ph:22,realFt:10.0,cat:"Mythological",realistic:["DarkBrown","Gray","Black"],
+  draw(c,col){
+    const hc=col.shade?col:{base:"#508848",shade:"#306828",hi:"#68a860"};
+    rc(c,7,10,10,7,hc.base);rc(c,7,10,10,1,hc.hi);rc(c,7,16,10,1,hc.shade);rc(c,9,13,6,3,hc.hi);//belly
+    rc(c,4,4,4,8,hc.base);rc(c,4,4,4,1,hc.hi);//left neck
+    rc(c,7,2,4,10,hc.base);rc(c,7,2,4,1,hc.hi);//center neck
+    rc(c,10,4,4,8,hc.base);rc(c,10,4,4,1,hc.hi);//right neck
+    rc(c,2,1,4,4,hc.base);rc(c,2,1,4,1,hc.hi);//left head
+    rc(c,6,0,4,3,hc.base);rc(c,6,0,4,1,hc.hi);//center head
+    rc(c,11,1,4,4,hc.base);rc(c,11,1,4,1,hc.hi);//right head
+    px(c,3,2,"#cc2222");px(c,7,1,"#cc2222");px(c,12,2,"#cc2222");//eyes
+    px(c,2,3,"#cc4444");px(c,6,2,"#cc4444");px(c,11,3,"#cc4444");//mouths
+    rc(c,8,17,3,4,hc.base);rc(c,15,17,3,4,hc.base);rc(c,8,20,3,1,hc.shade);rc(c,15,20,3,1,hc.shade);
+    rc(c,17,12,3,3,hc.base);rc(c,19,11,3,2,hc.base);rc(c,21,11,2,2,hc.shade);//tail
+    for(let i=0;i<3;i++){px(c,8+i*3,11,hc.shade);px(c,9+i*3,15,hc.shade);}//scales
+  }};
+
+const PET_CATEGORIES=["Dogs","Cats","Farm","Wild","Small","Mythological"];
+function getPetsByCategory(cat){return Object.entries(PETS).filter(([,v])=>v.cat===cat).map(([k])=>k);}
+function getPetRealisticColors(species){const p=PETS[species];if(!p)return{};const out={};(p.realistic||[]).forEach(k=>{if(PET_COLORS[k])out[k]=PET_COLORS[k];});return out;}
+
+// ─── Sky ───
+const SKY_COLORS={Day:{top:"#3878c8",mid:"#5898dd",low:"#88bbee",sun:true},Night:{top:"#08081a",mid:"#101030",low:"#182048",moon:true},Sunset:{top:"#2a1848",mid:"#c85830",low:"#e8a830"},Rain:{top:"#384858",mid:"#506070",low:"#687888"},Snow:{top:"#788898",mid:"#8898a8",low:"#a0b0b8"},Storm:{top:"#181828",mid:"#283040",low:"#384858"},Rainbow:{top:"#3878c8",mid:"#5898dd",low:"#88bbee",sun:true,rainbow:true},Foggy:{top:"#607078",mid:"#788890",low:"#90a0a8"}};
+
+function drawSky(c,weather){
+  const sk=SKY_COLORS[weather];
+  for(let y=0;y<GROUND_Y;y++){const t=y/GROUND_Y;let r,g,b;const c1=hexToRgb(sk.top),c2=hexToRgb(sk.mid),c3=hexToRgb(sk.low);if(t<0.5){const lt=t*2;r=c1.r+(c2.r-c1.r)*lt;g=c1.g+(c2.g-c1.g)*lt;b=c1.b+(c2.b-c1.b)*lt;}else{const lt=(t-0.5)*2;r=c2.r+(c3.r-c2.r)*lt;g=c2.g+(c3.g-c2.g)*lt;b=c2.b+(c3.b-c2.b)*lt;}rc(c,0,y,SW,1,`rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`);}
+  if(sk.sun){rc(c,105,6,6,6,"#ffe844");rc(c,106,5,4,1,"#ffe844");rc(c,106,12,4,1,"#ffe844");rc(c,104,8,1,2,"#ffe844");rc(c,112,8,1,2,"#ffe844");rc(c,106,7,4,4,"#fff8aa");}
+  if(sk.moon){rc(c,100,5,8,8,"#d8d8c0");rc(c,101,4,6,1,"#d8d8c0");rc(c,101,13,6,1,"#d8d8c0");rc(c,102,6,4,4,"#eeeecc");px(c,103,7,"#c0c0a8");px(c,106,9,"#c0c0a8");px(c,102,10,"#c0c0a8");}
+  if(sk.rainbow){const colors=["#ff0000","#ff8800","#ffff00","#00cc00","#0066ff","#4400cc","#8800aa"];const cx=64,cy=50;colors.forEach((col,i)=>{const r=30+i*2;for(let a=0;a<Math.PI;a+=0.04){const x=Math.round(cx+Math.cos(a+Math.PI)*r),y=Math.round(cy+Math.sin(a+Math.PI)*r);if(y>=0&&y<GROUND_Y&&x>=0&&x<SW)px(c,x,y,col);}});}
+}
+
+// ─── Backgrounds ───
+function drawBgMountains(c){tri(c,-10,GROUND_Y,25,12,55,GROUND_Y,"#3a4458");tri(c,35,GROUND_Y,65,8,95,GROUND_Y,"#3a4458");tri(c,80,GROUND_Y,110,15,138,GROUND_Y,"#3a4458");tri(c,10,GROUND_Y,45,18,80,GROUND_Y,"#4a5a6a");tri(c,60,GROUND_Y,95,14,128,GROUND_Y,"#4a5a6a");tri(c,20,14,25,12,30,14,"#e8e8f0");tri(c,60,10,65,8,70,10,"#e8e8f0");tri(c,105,17,110,15,115,17,"#e8e8f0");tri(c,40,20,45,18,50,20,"#dde0e8");tri(c,90,16,95,14,100,16,"#dde0e8");rc(c,0,GROUND_Y,SW,SH-GROUND_Y,"#4a6a38");rc(c,0,GROUND_Y+4,SW,SH-GROUND_Y-4,"#3a5a28");[8,22,38,55,72,90,108,118].forEach(tx=>{const th=6+(tx*3%4);rc(c,tx,GROUND_Y-1,1,3,"#3a2810");tri(c,tx-2,GROUND_Y-1,tx,GROUND_Y-th,tx+3,GROUND_Y-1,"#2a5a20");tri(c,tx-1,GROUND_Y-3,tx,GROUND_Y-th,tx+2,GROUND_Y-3,"#3a7a30");});rc(c,15,GROUND_Y+1,4,2,"#606868");rc(c,85,GROUND_Y+2,3,2,"#586060");rc(c,50,GROUND_Y+1,5,3,"#606868");}
+function drawBgBeach(c){rc(c,0,GROUND_Y-10,SW,10,"#2868a8");rc(c,0,GROUND_Y-8,SW,8,"#3078b8");rc(c,0,GROUND_Y-5,SW,5,"#3888c8");for(let x=0;x<SW;x+=6){px(c,x,GROUND_Y-5,"#88ccee");px(c,x+1,GROUND_Y-5,"#88ccee");px(c,x+3,GROUND_Y-3,"#88ccee");}rc(c,0,GROUND_Y,SW,SH-GROUND_Y,"#e0c878");rc(c,0,GROUND_Y,SW,2,"#d0b868");rc(c,0,SH-4,SW,4,"#c8b060");rc(c,0,GROUND_Y,SW,3,"#c0a850");rc(c,110,GROUND_Y-18,2,18,"#8a6030");rc(c,111,GROUND_Y-16,1,14,"#7a5020");for(let i=0;i<5;i++)rc(c,106+i*2,GROUND_Y-20+Math.abs(i-2),2,1,"#48a830");for(let i=0;i<6;i++)rc(c,105+i*2,GROUND_Y-19+Math.abs(i-2.5)*0.8,2,1,"#58b840");rc(c,112,GROUND_Y-18,3,1,"#48a830");rc(c,113,GROUND_Y-17,3,1,"#48a830");px(c,25,GROUND_Y+3,"#e8a8a8");px(c,60,GROUND_Y+5,"#f0d0a0");px(c,90,GROUND_Y+2,"#e8b8b8");px(c,40,GROUND_Y+4,"#e06060");px(c,41,GROUND_Y+3,"#e06060");px(c,39,GROUND_Y+3,"#e06060");}
+function drawBgPark(c){rc(c,0,GROUND_Y,SW,SH-GROUND_Y,"#4a8838");rc(c,0,GROUND_Y+3,SW,SH-GROUND_Y-3,"#3a7828");rc(c,50,GROUND_Y,20,SH-GROUND_Y,"#c8b878");rc(c,52,GROUND_Y,16,SH-GROUND_Y,"#d0c080");rc(c,6,GROUND_Y-2,16,6,"#3888c8");rc(c,7,GROUND_Y-3,14,1,"#3888c8");rc(c,7,GROUND_Y+4,14,1,"#3888c8");rc(c,8,GROUND_Y-1,12,4,"#48a8e0");[[15,16],[35,18],[95,17],[115,14]].forEach(([tx,th])=>{rc(c,tx,GROUND_Y-3,2,4,"#5a3818");const cy=GROUND_Y-th;for(let dy=-1;dy<=1;dy++)rc(c,tx-4,cy+dy*3,10,3,"#2a7a28");for(let dy=-1;dy<=1;dy++)rc(c,tx-3,cy+dy*3+1,8,2,"#3a8a38");});rc(c,80,GROUND_Y-3,10,1,"#6a4020");rc(c,81,GROUND_Y-2,1,3,"#5a3018");rc(c,88,GROUND_Y-2,1,3,"#5a3018");rc(c,80,GROUND_Y-1,10,1,"#6a4020");const fc=["#e84848","#e8e848","#e848e8","#ff8844","#8888ff"];[[5,3],[28,2],[45,4],[75,3],[100,2],[120,5]].forEach(([fx,fy])=>{px(c,fx,GROUND_Y+fy,fc[(fx*7)%fc.length]);px(c,fx+1,GROUND_Y+fy-1,"#48c848");});}
+function drawBgFarm(c){rc(c,0,GROUND_Y,SW,SH-GROUND_Y,"#6a8a38");rc(c,0,GROUND_Y+3,SW,SH-GROUND_Y-3,"#5a7a28");rc(c,0,GROUND_Y+1,SW,4,"#a08850");rc(c,0,GROUND_Y+2,SW,2,"#b09860");rc(c,8,GROUND_Y-18,24,18,"#b83020");rc(c,8,GROUND_Y-18,24,2,"#d04030");rc(c,8,GROUND_Y-2,24,2,"#901818");tri(c,5,GROUND_Y-18,20,GROUND_Y-26,35,GROUND_Y-18,"#7a4020");tri(c,7,GROUND_Y-18,20,GROUND_Y-24,33,GROUND_Y-18,"#8a5030");rc(c,16,GROUND_Y-10,8,10,"#5a3018");rc(c,16,GROUND_Y-10,8,1,"#7a5030");rc(c,20,GROUND_Y-10,1,10,"#4a2810");for(let x=40;x<SW;x+=8){rc(c,x,GROUND_Y-4,1,5,"#8a7040");if(x+8<SW){rc(c,x,GROUND_Y-3,8,1,"#a08850");rc(c,x,GROUND_Y-1,8,1,"#a08850");}}for(let row=0;row<3;row++){const ry=GROUND_Y+6+row*3;for(let x=5;x<55;x+=3){px(c,x,ry,"#48a828");px(c,x,ry-1,"#58b838");}}rc(c,112,GROUND_Y-20,4,20,"#d0c8b8");rc(c,113,GROUND_Y-19,2,18,"#b8b0a0");rc(c,114,GROUND_Y-28,1,8,"#888");rc(c,107,GROUND_Y-19,8,1,"#888");rc(c,114,GROUND_Y-20,1,8,"#888");rc(c,115,GROUND_Y-19,8,1,"#888");}
+function drawBgCastle(c){rc(c,0,GROUND_Y,SW,SH-GROUND_Y,"#686878");for(let y=GROUND_Y;y<SH;y+=3)for(let x=(y%6<3?0:2);x<SW;x+=5){rc(c,x,y,4,2,"#5a5a6a");px(c,x,y,"#787888");}rc(c,0,GROUND_Y-25,SW,25,"#8888a0");rc(c,0,GROUND_Y-25,SW,2,"#9898b0");rc(c,0,GROUND_Y-2,SW,2,"#686878");for(let x=0;x<SW;x+=6){rc(c,x,GROUND_Y-28,4,3,"#8888a0");rc(c,x,GROUND_Y-28,4,1,"#9898b0");}rc(c,5,GROUND_Y-38,14,38,"#7878a0");rc(c,5,GROUND_Y-38,14,2,"#9090b8");tri(c,3,GROUND_Y-38,12,GROUND_Y-46,21,GROUND_Y-38,"#6a3828");tri(c,4,GROUND_Y-38,12,GROUND_Y-44,20,GROUND_Y-38,"#7a4838");rc(c,12,GROUND_Y-47,1,6,"#5a3818");rc(c,13,GROUND_Y-47,5,3,"#cc2828");rc(c,13,GROUND_Y-47,5,1,"#e83838");rc(c,105,GROUND_Y-35,14,35,"#7878a0");rc(c,105,GROUND_Y-35,14,2,"#9090b8");tri(c,103,GROUND_Y-35,112,GROUND_Y-43,121,GROUND_Y-35,"#6a3828");tri(c,104,GROUND_Y-35,112,GROUND_Y-41,120,GROUND_Y-35,"#7a4838");rc(c,112,GROUND_Y-44,1,6,"#5a3818");rc(c,113,GROUND_Y-44,5,3,"#2828cc");rc(c,113,GROUND_Y-44,5,1,"#3838e8");rc(c,52,GROUND_Y-16,20,16,"#484858");rc(c,54,GROUND_Y-14,16,14,"#383848");for(let i=0;i<8;i++){const ax=54+i*2,ay=GROUND_Y-14-Math.round(Math.sqrt(64-(i-4)*(i-4)));rc(c,ax,ay,2,GROUND_Y-14-ay,"#383848");}px(c,48,GROUND_Y-10,"#e8a830");px(c,48,GROUND_Y-11,"#ff6030");px(c,75,GROUND_Y-10,"#e8a830");px(c,75,GROUND_Y-11,"#ff6030");[[10,GROUND_Y-28],[14,GROUND_Y-22],[108,GROUND_Y-26],[114,GROUND_Y-20]].forEach(([wx,wy])=>rc(c,wx,wy,2,4,"#282838"));}
+function drawBgMeadow(c){for(let x=0;x<SW;x++){const h1=Math.sin(x*0.05)*4+Math.sin(x*0.02+1)*3;const h2=Math.sin(x*0.04+2)*3+Math.sin(x*0.015)*4;rc(c,x,GROUND_Y-10+Math.round(h1),1,10-Math.round(h1),"#4a8a38");rc(c,x,GROUND_Y-3+Math.round(h2*0.5),1,3-Math.round(h2*0.5),"#5a9a48");}rc(c,0,GROUND_Y,SW,SH-GROUND_Y,"#4a8838");rc(c,0,GROUND_Y+4,SW,SH-GROUND_Y-4,"#3a7828");for(let x=2;x<SW;x+=3){const gh=3+(x*7%5);rc(c,x,GROUND_Y-gh,1,gh,"#58a848");if(gh>4)px(c,x,GROUND_Y-gh,"#68b858");}const fC=["#e84848","#e8e848","#e848e8","#ff8844","#4488ff","#ff88aa","#88ddff","#ffaa44"];for(let i=0;i<35;i++)px(c,(i*17+5)%SW,GROUND_Y-1-(i*13%6),fC[i%fC.length]);px(c,30,GROUND_Y-18,"#e848e8");px(c,31,GROUND_Y-18,"#e848e8");px(c,85,GROUND_Y-22,"#e8e848");px(c,86,GROUND_Y-22,"#e8e848");px(c,55,GROUND_Y-15,"#4488ff");px(c,56,GROUND_Y-15,"#4488ff");}
+const BG_DRAWERS={Mountains:drawBgMountains,Beach:drawBgBeach,Park:drawBgPark,Farm:drawBgFarm,Castle:drawBgCastle,Meadow:drawBgMeadow};
+
+// ─── Weather particles ───
+let particles=[],lightningTimer=0;
+function resetParticles(){particles=[];lightningTimer=0;const w=opts.weather;if(w==="Rain"||w==="Storm")for(let i=0;i<80;i++)particles.push({x:Math.random()*SW,y:Math.random()*SH,speed:1.5+Math.random()*1.5,len:2+Math.random()*2});else if(w==="Snow")for(let i=0;i<50;i++)particles.push({x:Math.random()*SW,y:Math.random()*SH,speed:0.2+Math.random()*0.4,drift:(Math.random()-0.5)*0.3,size:Math.random()>0.7?2:1});else if(w==="Night")for(let i=0;i<35;i++)particles.push({x:Math.random()*SW,y:Math.random()*(GROUND_Y*0.75),phase:Math.random()*Math.PI*2,rate:0.5+Math.random()*2});else if(w==="Foggy")for(let i=0;i<10;i++)particles.push({x:Math.random()*SW*2-SW*0.5,y:15+Math.random()*40,w:25+Math.random()*35,h:6+Math.random()*10,speed:0.08+Math.random()*0.15,alpha:0.12+Math.random()*0.12});}
+function updateParticles(ctx){const w=opts.weather;if(w==="Rain"||w==="Storm"){ctx.fillStyle="rgba(180,200,220,0.5)";particles.forEach(p=>{p.y+=p.speed;p.x-=p.speed*0.3;if(p.y>SH){p.y=-p.len;p.x=Math.random()*SW;}if(p.x<-2)p.x=SW;ctx.fillRect(Math.floor(p.x),Math.floor(p.y),1,Math.min(Math.ceil(p.len),3));});if(w==="Storm"){lightningTimer++;if(lightningTimer>100+Math.random()*200){ctx.fillStyle="rgba(255,255,255,0.6)";ctx.fillRect(0,0,SW,SH);lightningTimer=0;}}}else if(w==="Snow"){particles.forEach(p=>{p.y+=p.speed;p.x+=p.drift+Math.sin(Date.now()/2000+p.x*0.5)*0.08;if(p.y>SH){p.y=-2;p.x=Math.random()*SW;}if(p.x<0)p.x+=SW;if(p.x>=SW)p.x-=SW;ctx.fillStyle="rgba(255,255,255,0.75)";ctx.fillRect(Math.floor(p.x),Math.floor(p.y),p.size,p.size);});}else if(w==="Night"){particles.forEach(p=>{p.phase+=p.rate*0.03;const bright=0.25+0.75*Math.abs(Math.sin(p.phase));ctx.fillStyle=`rgba(255,255,230,${bright.toFixed(2)})`;ctx.fillRect(Math.floor(p.x),Math.floor(p.y),1,1);});}else if(w==="Foggy"){particles.forEach(p=>{p.x+=p.speed;if(p.x>SW+p.w/2)p.x=-p.w;ctx.fillStyle=`rgba(190,200,210,${p.alpha.toFixed(2)})`;const bx=Math.floor(p.x),by=Math.floor(p.y);ctx.fillRect(bx,by,Math.ceil(p.w),Math.ceil(p.h));ctx.fillStyle=`rgba(190,200,210,${(p.alpha*0.5).toFixed(2)})`;ctx.fillRect(bx-2,by+2,Math.ceil(p.w)+4,Math.ceil(p.h)-2);});}}
+
+// ─── Offscreen canvases ───
+const charCanvas=document.createElement("canvas");charCanvas.width=CW;charCanvas.height=CH;
+const bgCanvas=document.createElement("canvas");bgCanvas.width=SW;bgCanvas.height=SH;
+const petCanvas=document.createElement("canvas");petCanvas.width=32;petCanvas.height=32;
+
+function renderBackground(){const ctx=bgCanvas.getContext("2d");ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,SW,SH);if(opts.background==="None")return;if(opts.background==="Blank"){rc(ctx,0,0,SW,SH,"#ffffff");return;}drawSky(ctx,opts.weather);const drawer=BG_DRAWERS[opts.background];if(drawer)drawer(ctx);}
+function renderCharSprite(){drawCharacter(charCanvas,opts);}
+function renderPetSprite(){if(opts.petSpecies==="None")return;const pet=PETS[opts.petSpecies];if(!pet)return;petCanvas.width=pet.pw;petCanvas.height=pet.ph;const ctx=petCanvas.getContext("2d");ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,pet.pw,pet.ph);const colKey=opts.petColor;const col=PET_COLORS[colKey]||FANTASY_COLORS[colKey]||PET_COLORS.Brown;pet.draw(ctx,col);}
+
+// ─── Animation loop ───
+const sceneCanvas=document.getElementById("sceneCanvas");const sceneCtx=sceneCanvas.getContext("2d");
+let animId=null,lastWeather=null,lastBg=null;
+
+function animate(){
+  sceneCtx.imageSmoothingEnabled=false;
+  if(opts.weather!==lastWeather||opts.background!==lastBg){renderBackground();lastWeather=opts.weather;lastBg=opts.background;resetParticles();}
+  sceneCtx.clearRect(0,0,SW,SH);
+  if(opts.background!=="None")sceneCtx.drawImage(bgCanvas,0,0);
+
+  const charFt=opts.height;
+  const hasPet=opts.petSpecies!=="None"&&PETS[opts.petSpecies];
+  const pet=hasPet?PETS[opts.petSpecies]:null;
+  const petFt=pet?pet.realFt:0;
+  const maxFt=hasPet?Math.max(charFt,petFt,1):12;
+  const availH=GROUND_Y-6;
+  const pxPerFt=availH/maxFt;
+
+  const charH_px=charFt*pxPerFt;
+  const charScale=charH_px/30;
+  const charDrawW=Math.round(CW*charScale);
+  const charDrawH=Math.round(CH*charScale);
+
+  let petDrawW=0,petDrawH=0;
+  if(pet){const petH_px=petFt*pxPerFt;const petScale=petH_px/(pet.ph*0.9);petDrawW=Math.round(pet.pw*petScale);petDrawH=Math.round(pet.ph*petScale);}
+
+  const gap=2;
+  let charX,petX;
+  if(!hasPet){charX=Math.round(SW/2-charDrawW/2);}
+  else{const totalW=charDrawW+gap+petDrawW;const startX=Math.round(SW/2-totalW/2);if(opts.petSide==="Left"){petX=startX;charX=startX+petDrawW+gap;}else{charX=startX;petX=startX+charDrawW+gap;}}
+
+  const charY=Math.round(GROUND_Y-charH_px);
+  sceneCtx.drawImage(charCanvas,0,0,CW,CH,charX,charY,charDrawW,charDrawH);
+
+  if(pet){
+    const petY=Math.round(GROUND_Y-petFt*pxPerFt);
+    if(opts.petSide==="Left"){sceneCtx.save();sceneCtx.translate(petX+petDrawW,0);sceneCtx.scale(-1,1);sceneCtx.drawImage(petCanvas,0,0,pet.pw,pet.ph,0,petY,petDrawW,petDrawH);sceneCtx.restore();}
+    else{sceneCtx.drawImage(petCanvas,0,0,pet.pw,pet.ph,petX,petY,petDrawW,petDrawH);}
+  }
+
+  if(opts.background!=="None"&&opts.background!=="Blank")updateParticles(sceneCtx);
+  animId=requestAnimationFrame(animate);
+}
+
+// ─── Config ───
+const HAIR_STYLES=["None","Short","Messy","Long","Mohawk","Ponytail","Curly","Spiky"];
+const WEAPONS=["None","Sword","Axe","Staff","Bow"];
+const HEADGEARS=["None","Helmet","Crown","Hood"];
+const BACKGROUNDS=["None","Blank","Mountains","Beach","Park","Farm","Castle","Meadow"];
+const WEATHERS=["Day","Night","Sunset","Rain","Snow","Storm","Rainbow","Foggy"];
+
+const TABS=[
+  {id:"body",label:"Body",icon:"👤",sections:[{key:"skin",label:"Skin",type:"swatch",palette:SKIN},{key:"eyes",label:"Eyes",type:"swatch",palette:EYE,isFlat:true},{key:"height",label:"Height",type:"slider",min:1,max:12,step:1,suffix:" ft"}]},
+  {id:"hair",label:"Hair",icon:"💇",sections:[{key:"hairStyle",label:"Style",type:"text",options:HAIR_STYLES},{key:"hairColor",label:"Color",type:"swatch",palette:HAIR_COLORS}]},
+  {id:"clothes",label:"Outfit",icon:"👕",sections:[{key:"shirt",label:"Shirt",type:"swatch",palette:CLOTH},{key:"pants",label:"Pants",type:"swatch",palette:CLOTH},{key:"shoes",label:"Shoes",type:"swatch",palette:CLOTH}]},
+  {id:"armor",label:"Armor",icon:"🛡️",sections:[{key:"armor",label:"Plate",type:"swatch",palette:METAL,allowNone:true},{key:"headgear",label:"Head",type:"text",options:HEADGEARS},{key:"headMetal",label:"Metal",type:"swatch",palette:METAL,showIf:o=>o.headgear==="Helmet"||o.headgear==="Crown"},{key:"hoodColor",label:"Hood",type:"swatch",palette:CLOTH,showIf:o=>o.headgear==="Hood"}]},
+  {id:"weapons",label:"Arms",icon:"⚔️",sections:[{key:"weapon",label:"Weapon",type:"text",options:WEAPONS},{key:"shield",label:"Shield",type:"swatch",palette:METAL,allowNone:true},{key:"cape",label:"Cape",type:"swatch",palette:CLOTH,allowNone:true}]},
+  {id:"pet",label:"Pet",icon:"🐾",sections:[]},
+  {id:"scene",label:"Scene",icon:"🌄",sections:[{key:"background",label:"Background",type:"text",options:BACKGROUNDS},{key:"weather",label:"Weather",type:"text",options:WEATHERS}]},
+];
+
+// ─── State ───
+let opts={skin:"Light",eyes:"Blue",height:6,hairStyle:"Short",hairColor:"Brown",shirt:"Teal",pants:"Blue",shoes:"Brown",armor:"None",headgear:"None",headMetal:"Steel",hoodColor:"Black",weapon:"None",shield:"None",cape:"None",background:"Meadow",weather:"Day",petSpecies:"None",petColor:"Brown",petSide:"Right",petCategory:"Dogs"};
+let petName="";
+let currentTab="body";
+let leftPct=45;
+let isDragging=false;
+
+// ─── DOM refs ───
+const nameInput=document.getElementById("nameInput");
+const nameplate=document.getElementById("nameplate");
+const tabBar=document.getElementById("tabBar");
+const optionsPanel=document.getElementById("optionsPanel");
+const previewPanel=document.getElementById("previewPanel");
+const mainArea=document.getElementById("mainArea");
+const divider=document.getElementById("divider");
+const modal=document.getElementById("modal");
+const modalImg=document.getElementById("modalImg");
+const modalTitle=document.getElementById("modalTitle");
+const modalClose=document.getElementById("modalClose");
+const btnRandom=document.getElementById("btnRandom");
+const btnSave=document.getElementById("btnSave");
+const btnShare=document.getElementById("btnShare");
+const btnEdit=document.getElementById("btnEdit");
+const toast=document.getElementById("toast");
+const descInput=document.getElementById("descInput");
+const descDisplay=document.getElementById("descDisplay");
+
+function updateNameplate(){const cn=nameInput.value||"???";const pn=petName.trim();nameplate.textContent=(opts.petSpecies!=="None"&&pn)?`${cn} & ${pn}`:cn;descDisplay.textContent=descInput.value;}
+descInput.addEventListener("input",()=>{descDisplay.textContent=descInput.value;});
+
+// ─── Render UI ───
+function render(){renderCharSprite();renderPetSprite();updateNameplate();if(!viewMode)previewPanel.style.width=leftPct+"%";document.querySelector(".scene").classList.toggle("transparent",opts.background==="None");lastWeather=null;lastBg=null;renderTabs();renderOptions();}
+function renderTabs(){tabBar.innerHTML="";TABS.forEach(t=>{const btn=document.createElement("button");btn.className="tab"+(currentTab===t.id?" on":"");btn.innerHTML=`<span class="icon">${t.icon}</span>${t.label}`;btn.addEventListener("click",()=>{currentTab=t.id;renderTabs();renderOptions();});tabBar.appendChild(btn);});}
+
+function renderOptions(){
+  optionsPanel.innerHTML="";const tab=TABS.find(t=>t.id===currentTab);if(!tab)return;
+  if(tab.id==="pet"){renderPetTab();return;}
+  tab.sections.forEach(sec=>{
+    if(sec.showIf&&!sec.showIf(opts))return;
+    const div=document.createElement("div");div.className="sec";
+    const label=document.createElement("div");label.className="sec-label";label.textContent=sec.label;div.appendChild(label);
+    if(sec.type==="swatch"){
+      const row=document.createElement("div");row.className="swatches";
+      if(sec.allowNone){const none=document.createElement("div");none.className="sw sw-none"+(opts[sec.key]==="None"?" on":"");none.textContent="✕";none.title="None";none.addEventListener("click",()=>{opts[sec.key]="None";render();});row.appendChild(none);}
+      Object.entries(sec.palette).forEach(([k,v])=>{const sw=document.createElement("div");sw.className="sw"+(opts[sec.key]===k?" on":"");sw.title=k;sw.style.background=sec.isFlat?v:(v.base||v);sw.addEventListener("click",()=>{opts[sec.key]=k;render();});row.appendChild(sw);});
+      div.appendChild(row);
+    }else if(sec.type==="text"){
+      const row=document.createElement("div");row.className="textbtns";
+      sec.options.forEach(o=>{const btn=document.createElement("button");btn.className="tx"+(opts[sec.key]===o?" on":"");btn.textContent=o;btn.addEventListener("click",()=>{opts[sec.key]=o;render();});row.appendChild(btn);});
+      div.appendChild(row);
+    }else if(sec.type==="slider"){
+      const row=document.createElement("div");row.className="slider-row";
+      const slider=document.createElement("input");slider.type="range";slider.min=sec.min;slider.max=sec.max;slider.step=sec.step;slider.value=opts[sec.key];
+      const val=document.createElement("span");val.className="slider-val";val.textContent=opts[sec.key]+(sec.suffix||"");
+      slider.addEventListener("input",()=>{opts[sec.key]=parseFloat(slider.value);val.textContent=opts[sec.key]+(sec.suffix||"");renderCharSprite();lastWeather=null;});
+      row.appendChild(slider);row.appendChild(val);div.appendChild(row);
+    }
+    optionsPanel.appendChild(div);
+  });
+}
+
+// ─── Pet Tab ───
+function renderPetTab(){
+  const panel=optionsPanel;
+  panel.innerHTML="";
+  // None
+  const ns=document.createElement("div");ns.className="sec";const nr=document.createElement("div");nr.className="textbtns";
+  const nb=document.createElement("button");nb.className="tx"+(opts.petSpecies==="None"?" on":"");nb.textContent="No Pet";
+  nb.addEventListener("click",()=>{opts.petSpecies="None";render();});nr.appendChild(nb);ns.appendChild(nr);panel.appendChild(ns);
+  // Category
+  const cs=document.createElement("div");cs.className="sec";const cl=document.createElement("div");cl.className="sec-label";cl.textContent="Category";cs.appendChild(cl);
+  const cr=document.createElement("div");cr.className="textbtns";
+  PET_CATEGORIES.forEach(cat=>{const btn=document.createElement("button");btn.className="tx"+(opts.petCategory===cat?" on":"");btn.textContent=cat;btn.addEventListener("click",()=>{opts.petCategory=cat;renderPetTab();});cr.appendChild(btn);});
+  cs.appendChild(cr);panel.appendChild(cs);
+  // Species
+  const speciesList=getPetsByCategory(opts.petCategory);
+  const ss=document.createElement("div");ss.className="sec";const sl=document.createElement("div");sl.className="sec-label";sl.textContent="Species";ss.appendChild(sl);
+  const sr=document.createElement("div");sr.className="textbtns";
+  speciesList.forEach(name=>{const btn=document.createElement("button");btn.className="tx"+(opts.petSpecies===name?" on":"");btn.textContent=name;
+    btn.addEventListener("click",()=>{opts.petSpecies=name;const rc2=Object.keys(getPetRealisticColors(name));if(rc2.length>0&&!rc2.includes(opts.petColor)&&!FANTASY_COLORS[opts.petColor])opts.petColor=rc2[0];else if(rc2.length>0&&!rc2.includes(opts.petColor))opts.petColor=rc2[0];render();});
+    sr.appendChild(btn);});
+  ss.appendChild(sr);panel.appendChild(ss);
+  if(opts.petSpecies==="None")return;
+  // Colors
+  const colSec=document.createElement("div");colSec.className="sec";const colL=document.createElement("div");colL.className="sec-label";colL.textContent="Color";colSec.appendChild(colL);
+  const colR=document.createElement("div");colR.className="swatches";
+  const realC=getPetRealisticColors(opts.petSpecies);
+  Object.entries(realC).forEach(([k,v])=>{const sw=document.createElement("div");sw.className="sw"+(opts.petColor===k?" on":"");sw.title=k;sw.style.background=v.base;sw.addEventListener("click",()=>{opts.petColor=k;render();});colR.appendChild(sw);});
+  if(Object.keys(realC).length>0){const d=document.createElement("div");d.className="sw-div";colR.appendChild(d);}
+  Object.entries(FANTASY_COLORS).forEach(([k,v])=>{const sw=document.createElement("div");sw.className="sw"+(opts.petColor===k?" on":"");sw.title=k;sw.style.background=v.base;sw.addEventListener("click",()=>{opts.petColor=k;render();});colR.appendChild(sw);});
+  colSec.appendChild(colR);panel.appendChild(colSec);
+  // Side
+  const sideSec=document.createElement("div");sideSec.className="sec";const sideL=document.createElement("div");sideL.className="sec-label";sideL.textContent="Side";sideSec.appendChild(sideL);
+  const sideR=document.createElement("div");sideR.className="textbtns";
+  ["Left","Right"].forEach(side=>{const btn=document.createElement("button");btn.className="tx"+(opts.petSide===side?" on":"");btn.textContent=side;btn.addEventListener("click",()=>{opts.petSide=side;render();});sideR.appendChild(btn);});
+  sideSec.appendChild(sideR);panel.appendChild(sideSec);
+  // Pet name
+  const pnSec=document.createElement("div");pnSec.className="sec";const pnL=document.createElement("div");pnL.className="sec-label";pnL.textContent="Pet Name";pnSec.appendChild(pnL);
+  const pnR=document.createElement("div");pnR.className="pet-name-row";const pnI=document.createElement("input");pnI.value=petName;pnI.placeholder="Name your pet...";
+  pnI.addEventListener("input",()=>{petName=pnI.value;updateNameplate();});pnR.appendChild(pnI);pnSec.appendChild(pnR);panel.appendChild(pnSec);
+}
+
+// ─── Name input ───
+nameInput.addEventListener("input",updateNameplate);
+
+// ─── Divider ───
+function startDrag(e){isDragging=true;document.body.style.cursor="col-resize";document.body.style.userSelect="none";e.preventDefault();}
+function onDrag(e){if(!isDragging)return;const rect=mainArea.getBoundingClientRect();const clientX=e.touches?e.touches[0].clientX:e.clientX;const pct=((clientX-rect.left)/rect.width)*100;leftPct=Math.min(70,Math.max(25,pct));previewPanel.style.width=leftPct+"%";}
+function endDrag(){isDragging=false;document.body.style.cursor="";document.body.style.userSelect="";}
+divider.addEventListener("mousedown",startDrag);divider.addEventListener("touchstart",startDrag,{passive:false});
+window.addEventListener("mousemove",onDrag);window.addEventListener("touchmove",onDrag,{passive:false});
+window.addEventListener("mouseup",endDrag);window.addEventListener("touchend",endDrag);
+
+// ─── Random ───
+function pick(arr){return arr[Math.floor(Math.random()*arr.length)];}
+
+// ——— Story Generator ———
+function generateStory(n,pn,species,cat,wpn,bg,wth,hg){
+  const lbg=bg.toLowerCase();
+  const an=species&&"aeiou".includes(species[0].toLowerCase())?"an":"a";
+
+  // --- Solo hero (no pet) ---
+  if(species==="None"||!pn){
+    const solo=[
+      `${n} stood alone in the ${lbg}. it was quiet. too quiet. ${n} did not like quiet.`,
+      `${n} had no companion. ${n} had no plan. ${n} had a vague sense that this was fine.`,
+      `the ${lbg} was empty. just ${n} and the wind. the wind had nothing useful to say.`,
+      `${n} looked around for allies. there were none. there was a nice rock, though.`,
+      `${n} traveled alone. not by choice. every pet in the kingdom had heard the stories.`,
+      `"i work alone," said ${n}, to nobody, because they were alone.`,
+      `${n} didn't need a sidekick. ${n} needed a map. ${n} had neither.`,
+      `somewhere out there was a loyal companion for ${n}. today was not that day.`,
+      `the ${lbg} stretched out before ${n}. ${n} stretched out a hand to nobody. classic ${n}.`,
+      `${n} had once had a pet. it left. ${n} doesn't like to talk about it.`,
+    ];
+    if(wth==="Storm"||wth==="Rain")solo.push(
+      `${n} stood in the rain, alone, rethinking every decision that led to this moment.`,
+      `the rain didn't care that ${n} had no umbrella. the rain never cares.`
+    );
+    if(wth==="Snow")solo.push(
+      `${n} trudged through the snow alone. at least the snow didn't judge. probably.`
+    );
+    if(wth==="Night")solo.push(
+      `${n} stared into the darkness. the darkness stared back. neither blinked. awkward.`
+    );
+    if(wpn==="Staff")solo.push(
+      `${n} waved the staff at the empty ${lbg}. a leaf moved. ${n} claimed it as a victory.`
+    );
+    if(wpn==="Sword")solo.push(
+      `${n} drew the sword dramatically. there was no one around to see it. typical.`
+    );
+    return pick(solo);
+  }
+
+  // --- Pet stories ---
+  const pool=[];
+  const sl=species.toLowerCase();
+
+  // Universal (always in pool)
+  pool.push(
+    `${pn} was ${an} ${sl}. ${n} was a fool. both of these were established facts.`,
+    `${n} and ${pn} had been through a lot together. ${pn} had hated most of it.`,
+    `${pn} didn't choose this life. ${pn} didn't choose ${n}. ${pn} was starting to see a pattern.`,
+    `"we make a great team," said ${n}. ${pn} said nothing, which said everything.`,
+    `${n} looked at ${pn}. ${pn} looked at the horizon. one of them had priorities.`,
+    `${n} had big dreams. ${pn} had a nap planned. only one of these would happen today.`,
+    `${n} called it an adventure. ${pn} called it a series of poor decisions. both were correct.`,
+    `${pn} followed ${n} into the ${lbg}. not out of loyalty. out of morbid curiosity.`,
+    `${n} pointed at the ${lbg} dramatically. ${pn} sat down. meeting adjourned.`,
+    `${n} believed in destiny. ${pn} believed in snacks. only one of them was ever satisfied.`,
+    `"trust me," said ${n}. ${pn} had heard this before. it never ended well.`,
+    `${n} was having the best day ever. ${pn} was having a day. just a day.`,
+  );
+
+  // Category-specific
+  if(cat==="Cats"){pool.push(
+    `${pn} stared at ${n} like they were an idiot. ${n} was starting to think ${pn} was right.`,
+    `${pn} licked one paw and walked away. meeting adjourned.`,
+    `${pn} tolerated ${n}. this was the highest honor a cat could bestow, and ${n} knew it.`,
+    `${pn} knocked something off a ledge. ${n} picked it up. ${pn} knocked it off again. system working.`,
+    `${n} tried to pet ${pn}. ${pn} allowed exactly three strokes before choosing violence.`,
+    `${pn} purred briefly, then remembered who ${n} was and stopped.`,
+    `${pn} had trained ${n} well. food appeared on time. the arrangement was acceptable.`,
+    `${n} thought they owned ${pn}. ${pn} thought this was hilarious.`,
+    `${pn} sat in a box. ${n} had bought a bed. ${pn} sat in the box the bed came in.`,
+  );}
+  if(cat==="Dogs"){pool.push(
+    `${pn} wagged anyway. ${pn} had no standards. ${n} found this deeply comforting.`,
+    `${pn} loved ${n} unconditionally. ${pn} also loved strangers, garbage, and loud noises.`,
+    `${pn} ate ${n}'s map. ${pn} felt no remorse. ${pn} wagged about it.`,
+    `${pn} would die for ${n}. ${pn} would also die for a stick. loyalty is complicated.`,
+    `${n} said "stay." ${pn} did not stay. ${pn} has never stayed. this was not new information.`,
+    `${pn} rolled in something horrible and then tried to cuddle ${n}. classic ${pn}.`,
+    `${pn} fetched the wrong thing. ${pn} was very proud. ${n} did not have the heart to explain.`,
+    `${n} threw a ball. ${pn} brought back a different, worse ball. ${n} didn't question it.`,
+  );}
+  if(cat==="Farm"){pool.push(
+    `${pn} stared at ${n}. just stared. ${n} had no idea what ${pn} wanted. neither did ${pn}.`,
+    `${pn} chewed slowly and judged ${n} with ancient, unblinking eyes.`,
+    `${n} tried to explain the quest to ${pn}. ${pn} ate some grass. fair response.`,
+    `${pn} was not built for adventure. ${pn} was built for standing in fields. ${pn} was nailing it.`,
+    `"onward!" said ${n}. ${pn} did not move. ${pn} found a good patch of grass and that was that.`,
+    `${n} and ${pn} made eye contact. it was unclear who was more confused by the situation.`,
+    `${n} tried to ride ${pn}. this went about as well as you'd expect.`,
+    `${pn} had no opinion about the quest. ${pn} had opinions about grass. that was the full list.`,
+  );}
+  if(cat==="Wild"){pool.push(
+    `${pn} was not a pet. ${n} was in denial about this. ${pn} was in denial about ${n}.`,
+    `no one had told ${pn} about domestication. ${pn} was here, feral and confused.`,
+    `${pn} could return to the wild at any moment. ${pn} stayed because ${n} had snacks.`,
+    `${n} called ${pn} "my companion." ${pn} called ${n} "that one who follows me."`,
+    `people stared at ${n} and ${pn}. this was not a normal pairing. ${pn} agreed completely.`,
+    `${pn} did not fetch. ${pn} did not sit. ${pn} occasionally tolerated proximity. progress.`,
+    `${n} found ${pn} in the wild. "found" was generous. "survived near" was more accurate.`,
+  );}
+  if(cat==="Small"){pool.push(
+    `${pn} was small but had the confidence of something much, much larger.`,
+    `${n} carried ${pn} in a pocket. ${pn} judged the world from up there.`,
+    `${pn} was tiny. ${pn}'s attitude was not. ${n} had learned this the hard way.`,
+    `${pn} squeaked. ${n} pretended to understand. the arrangement worked for both of them.`,
+    `${pn} fit in ${n}'s hand. the chaos ${pn} caused did not fit anywhere.`,
+    `people underestimated ${pn}. this was ${pn}'s greatest weapon. ${n} had scars to prove it.`,
+    `${n} bought ${pn} a tiny sword. ${pn} chewed it. close enough.`,
+  );}
+  if(cat==="Mythological"){pool.push(
+    `${pn} could level this entire village. ${pn} chose not to. today.`,
+    `${n} had a mythological companion. ${n} did not deserve one. everyone knew this.`,
+    `${pn} had existed for centuries. ${n} had existed for much less. ${pn} found this quaint.`,
+    `people feared ${pn}. ${n} did not. this said more about ${n} than about ${pn}.`,
+    `${pn} breathed ancient power. ${n} breathed heavily after climbing stairs.`,
+    `legends spoke of ${pn}. they did not mention ${n}. ${n} tried not to take it personally.`,
+    `${pn} had seen empires rise and fall. now ${pn} watched ${n} read a map upside down.`,
+    `${pn} was a creature of myth and terror. ${n} called ${pn} "buddy." ${pn} allowed it. barely.`,
+    `kingdoms trembled at ${pn}'s name. ${n} mispronounced it constantly.`,
+  );}
+
+  // Weather-specific
+  if(wth==="Storm"||wth==="Rain"){pool.push(
+    `the rain started. ${pn} looked at ${n} like this was entirely their fault.`,
+    `${n} forgot to check the weather. ${pn} did not forget to look disappointed.`,
+    `"it'll clear up," said ${n}. it did not clear up. ${pn} filed this under "reasons."`,
+    `${pn} was soaked. ${n} was soaked. the quest was also soaked. nobody was happy.`,
+    `the rain came sideways. ${pn} gave ${n} a look that could curdle milk.`,
+  );}
+  if(wth==="Snow"){pool.push(
+    `${pn} refused to walk in the snow. ${n} carried ${pn}. ${pn} had planned this all along.`,
+    `${n} said the snow was magical. ${pn} said the snow was cold. ${pn} was right.`,
+    `snow covered everything. ${pn} sat down and became a lump. ${n} related to this deeply.`,
+    `"isn't the snow beautiful?" said ${n}. ${pn} couldn't feel their legs.`,
+  );}
+  if(wth==="Night"){pool.push(
+    `${n} heard a noise in the dark. it was ${pn}, judging silently. as always.`,
+    `the night was dark and full of terrors. ${pn} was one of them. ${n} was not.`,
+    `${pn}'s eyes glowed in the dark. ${n} pretended this was normal.`,
+  );}
+  if(wth==="Foggy"){pool.push(
+    `${n} lost ${pn} in the fog. ${pn} was right behind ${n}. ${pn} enjoyed this.`,
+    `the fog rolled in. ${n} got lost immediately. ${pn} had been lost for an hour already.`,
+    `"stay close," said ${n} into the fog. ${pn} was already somewhere else entirely.`,
+  );}
+  if(wth==="Sunset"){pool.push(
+    `the sunset was beautiful. ${n} tried to share the moment. ${pn} was eating dirt.`,
+    `${n} gazed at the sunset dramatically. ${pn} gazed at ${n}, wondering when dinner was.`,
+  );}
+  if(wth==="Rainbow"){pool.push(
+    `a rainbow appeared. ${n} took it as a sign. ${pn} took it as a coincidence.`,
+    `"look, ${pn}, a rainbow!" ${pn} had already seen it. ${pn} was not moved.`,
+  );}
+
+  // Weapon-specific
+  if(wpn==="Staff"){pool.push(
+    `${n} waved the staff dramatically. nothing happened. ${pn} yawned.`,
+    `the staff glowed faintly. ${pn} was not impressed. ${pn} had seen glowing things before.`,
+    `${n} pointed the staff and said something mystical. ${pn} pretended not to know ${n}.`,
+  );}
+  if(wpn==="Sword"){pool.push(
+    `${n} drew the sword. ${pn} had seen this before. nothing ever actually needed slaying.`,
+    `${n} swung the sword at a bush. the bush won. ${pn} watched without sympathy.`,
+  );}
+  if(wpn==="Axe"){pool.push(
+    `${n} carried an axe for protection. so far it had only been used on firewood. ${pn} approved.`,
+    `the axe was meant to be intimidating. ${pn} was not intimidated.`,
+  );}
+  if(wpn==="Bow"){pool.push(
+    `${n} reached for an arrow. there were no arrows. ${pn} had chewed them all.`,
+    `${n} fired the bow heroically. the arrow went the wrong way. ${pn} flinched.`,
+  );}
+  if(wpn==="None"){pool.push(
+    `${n} was unarmed. ${pn} was the weapon. neither of them had accepted this yet.`,
+    `${n} brought no weapon. ${pn} was starting to question ${n}'s planning skills.`,
+  );}
+
+  // Background-specific
+  if(bg==="Castle"){pool.push(
+    `the castle was closed for renovations. nobody told ${n}.`,
+    `${n} approached the castle gates. the gates did not approach ${n} back.`,
+    `${pn} had never been to a castle. ${pn} was not as impressed as ${n} had hoped.`,
+  );}
+  if(bg==="Mountains"){pool.push(
+    `"almost at the top," lied ${n}. ${pn} had heard this four mountains ago.`,
+    `the mountain didn't care about ${n}'s quest. mountains never do.`,
+  );}
+  if(bg==="Beach"){pool.push(
+    `${pn} ate sand. ${n} questioned all life choices. the ocean did not comment.`,
+    `${n} wanted a beach adventure. ${pn} wanted sand out of everything. too late.`,
+  );}
+  if(bg==="Farm"){pool.push(
+    `the farm smelled exactly how you'd expect. ${pn} fit right in. ${n} did not.`,
+    `${n} had never been to a farm before. it showed. ${pn} was embarrassed for ${n}.`,
+  );}
+  if(bg==="Park"){pool.push(
+    `they went to the park. ${n} wanted adventure. ${pn} wanted a bench. ${pn} won.`,
+    `the park was peaceful until ${n} and ${pn} arrived. it was less peaceful after.`,
+  );}
+  if(bg==="Meadow"){pool.push(
+    `the meadow was nice. too nice. ${pn} suspected a trap. ${n} was picking flowers.`,
+    `${n} lay in the meadow dramatically. ${pn} also lay down. not for drama. just tired.`,
+  );}
+
+  // Headgear-specific
+  if(hg==="Crown"){pool.push(
+    `${n} wore a crown. ${pn} did not bow. ${pn} would never bow. ${n} accepted this.`,
+    `the crown made ${n} feel important. ${pn} made ${n} feel less important. balance.`,
+  );}
+  if(hg==="Helmet"){pool.push(
+    `${n} couldn't see through the helmet. ${pn} used this to their advantage.`,
+  );}
+  if(hg==="Hood"){pool.push(
+    `${n} wore a mysterious hood. ${pn} knew ${n} too well for mystery.`,
+  );}
+
+  return pick(pool);
+}
+
+
+btnRandom.addEventListener("click",()=>{
+  const allSpecies=Object.keys(PETS);const species=Math.random()>0.3?pick(allSpecies):"None";
+  let pColor="Brown";if(species!=="None"){const p=PETS[species];pColor=pick([...(p.realistic||[]),...Object.keys(FANTASY_COLORS)]);}
+  opts={skin:pick(Object.keys(SKIN)),eyes:pick(Object.keys(EYE)),height:3+Math.floor(Math.random()*8),hairStyle:pick(HAIR_STYLES),hairColor:pick(Object.keys(HAIR_COLORS)),shirt:pick(Object.keys(CLOTH)),pants:pick(Object.keys(CLOTH)),shoes:pick(Object.keys(CLOTH)),armor:pick(["None",...Object.keys(METAL)]),headgear:pick(["None","None","Helmet","Crown","Hood"]),headMetal:pick(Object.keys(METAL)),hoodColor:pick(Object.keys(CLOTH)),weapon:pick(["None","None","Sword","Axe","Staff","Bow"]),shield:pick(["None","None",...Object.keys(METAL)]),cape:pick(["None","None","None",...Object.keys(CLOTH)]),background:pick(BACKGROUNDS.filter(b=>b!=="None"&&b!=="Blank")),weather:pick(WEATHERS),petSpecies:species,petColor:pColor,petSide:pick(["Left","Right"]),petCategory:species!=="None"?PETS[species].cat:"Dogs"};
+  const names=["Shadow","Pixel","Storm","Ember","Frost","Blaze","Thorn","Sage","Rune","Hex","Jinx","Nova","Onyx","Vale","Wren","Ash","Bolt","Cinder","Drake","Echo"];
+  const petNames=["Buddy","Spark","Fang","Luna","Rex","Blitz","Coco","Pip","Nox","Ziggy","Scout","Biscuit","Pepper","Mochi","Gizmo","Bandit","Chip","Willow","Thor","Pickle"];
+  const heroName=pick(names);
+  nameInput.value=heroName;petName=species!=="None"?pick(petNames):"";
+  const story=generateStory(heroName,petName,species,opts.petCategory,opts.weapon,opts.background,opts.weather,opts.headgear);
+  descInput.value=story;descDisplay.textContent=story;
+  render();
+});
+
+// ─── Export ───
+btnSave.addEventListener("click",()=>{
+  const scale=6;const expW=SW*scale;const bannerH=40;const expH=SH*scale+bannerH;
+  const off=document.createElement("canvas");off.width=expW;off.height=expH;const oc=off.getContext("2d");oc.imageSmoothingEnabled=false;
+  oc.drawImage(sceneCanvas,0,0,SW,SH,0,0,expW,SH*scale);
+  const charName=(nameInput.value||"").trim();const pn=petName.trim();
+  const displayName=(opts.petSpecies!=="None"&&pn)?`${charName} & ${pn}`:charName;
+  if(displayName){const bannerY=SH*scale;oc.fillStyle="rgba(0,0,0,0.6)";oc.fillRect(0,bannerY,expW,bannerH);oc.fillStyle="#64dcc8";oc.font="bold 22px 'Silkscreen', monospace";oc.textAlign="center";oc.textBaseline="middle";oc.shadowColor="rgba(0,0,0,0.7)";oc.shadowBlur=4;oc.fillText(displayName,expW/2,bannerY+bannerH/2);oc.shadowBlur=0;}
+  modalImg.src=off.toDataURL("image/png");modalTitle.textContent=displayName||"Your Character";modal.style.display="flex";
+});
+
+// --- Modal ---
+modalClose.addEventListener("click",()=>{modal.style.display="none";});
+modal.addEventListener("click",(e)=>{if(e.target===modal)modal.style.display="none";});
+
+// --- Share ---
+function showToast(msg){toast.textContent=msg;toast.classList.add("show");setTimeout(()=>toast.classList.remove("show"),2200);}
+const PARAM_MAP={n:"name",pn:"petName",sk:"skin",ey:"eyes",ht:"height",hs:"hairStyle",hc:"hairColor",sh:"shirt",pa:"pants",so:"shoes",ar:"armor",hg:"headgear",hm:"headMetal",ho:"hoodColor",wp:"weapon",sd:"shield",ca:"cape",bg:"background",wt:"weather",ps:"petSpecies",pc:"petColor",pd:"petSide",ct:"petCategory"};
+const PARAM_REV=Object.fromEntries(Object.entries(PARAM_MAP).map(([k,v])=>[v,k]));
+
+btnShare.addEventListener("click",()=>{
+  const p=new URLSearchParams();
+  p.set("v","1");
+  const cn=(nameInput.value||"").trim();if(cn&&cn!=="Hero")p.set("n",cn);
+  if(petName.trim())p.set("pn",petName.trim());
+  const ds=descInput.value.trim();if(ds)p.set("ds",ds);
+  Object.keys(opts).forEach(k=>{const short=PARAM_REV[k];if(short)p.set(short,String(opts[k]));});
+  const url=window.location.origin+window.location.pathname+"?"+p.toString();
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(url).then(()=>showToast("Link copied to clipboard!")).catch(()=>showToast("Link ready - copy from address bar"));}
+  else{showToast("Link ready - copy from address bar");}
+  history.replaceState(null,"",url);
+});
+
+// --- Load from URL ---
+let viewMode=false;
+function loadFromURL(){
+  const p=new URLSearchParams(window.location.search);
+  if(p.size===0)return false;
+  if(p.get("v")==="1")viewMode=true;
+  const ds=p.get("ds");if(ds){descInput.value=ds;descDisplay.textContent=ds;}
+  Object.entries(PARAM_MAP).forEach(([short,key])=>{
+    const v=p.get(short);if(v===null)return;
+    if(key==="name"){nameInput.value=v;return;}
+    if(key==="petName"){petName=v;return;}
+    if(key==="height"){opts[key]=parseFloat(v);return;}
+    opts[key]=v;
+  });
+  return true;
+}
+const loadedFromURL=loadFromURL();
+
+// --- View / Edit mode ---
+function enterViewMode(){
+  viewMode=true;
+  document.getElementById("app").classList.add("view-mode");
+  btnEdit.style.display="";
+}
+function enterEditMode(){
+  viewMode=false;
+  document.getElementById("app").classList.remove("view-mode");
+  btnEdit.style.display="none";
+  const url=window.location.origin+window.location.pathname;
+  history.replaceState(null,"",url);
+  render();
+}
+btnEdit.addEventListener("click",enterEditMode);
+if(viewMode)enterViewMode();
+
+// --- Init ---
+renderCharSprite();renderPetSprite();renderBackground();resetParticles();renderTabs();renderOptions();updateNameplate();previewPanel.style.width=leftPct+"%";animate();
+</script></body></html>
