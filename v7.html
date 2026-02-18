@@ -21,6 +21,7 @@
   .btn{font-family:'Silkscreen',monospace;font-size:10px;padding:5px 10px;color:#fff;border:none;border-radius:7px;cursor:pointer;transition:all .1s}
   .btn:active{transform:scale(0.95)}
   .btn-rand{background:#d35f5f;box-shadow:0 3px 10px #d35f5f44}
+  .btn-stay{background:#e67e22;box-shadow:0 3px 10px #e67e2244}
   .btn-save{background:#2980b9;box-shadow:0 3px 10px #2980b944}
   .btn-share{background:#27ae60;box-shadow:0 3px 10px #27ae6044}
   .toast{position:fixed;top:12px;left:50%;transform:translateX(-50%) translateY(-60px);background:#27ae60;color:#fff;font-family:'Silkscreen',monospace;font-size:11px;padding:8px 18px;border-radius:8px;z-index:2000;transition:transform .3s ease,opacity .3s ease;opacity:0;pointer-events:none;white-space:nowrap}
@@ -30,7 +31,7 @@
   .scene{border-radius:10px;padding:4px;animation:shimmer 4s ease-in-out infinite;display:flex;justify-content:center;align-items:center;width:min(95%,420px);aspect-ratio:16/9;background:#0a0a18}
   .scene canvas{image-rendering:pixelated;width:100%;height:100%;border-radius:6px}
   .scene.transparent canvas{background:repeating-conic-gradient(#333 0% 25%,#555 0% 50%) 0 0/12px 12px}
-  .nameplate{margin-top:8px;padding:3px 14px;background:rgba(100,220,200,0.08);border:1px solid #1a3858;border-radius:6px;color:#64dcc8;font-size:clamp(10px,2vw,13px);text-align:center;letter-spacing:1px;max-width:95%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .nameplate{margin-top:8px;padding:3px 14px;background:rgba(100,220,200,0.08);border:1px solid #1a3858;border-radius:6px;color:#64dcc8;font-size:clamp(20px,4vw,26px);text-align:center;letter-spacing:1px;max-width:95%;word-wrap:break-word;white-space:normal}
   .divider{width:8px;cursor:col-resize;background:#1a3050;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s;touch-action:none}
   .divider:hover,.divider:active{background:#2a4060}
   .divider::after{content:'';display:block;width:2px;height:32px;border-radius:1px;background:#3a5a7a;box-shadow:4px 0 0 #3a5a7a}
@@ -68,35 +69,44 @@
   ::-webkit-scrollbar{width:6px}
   ::-webkit-scrollbar-track{background:transparent}
   ::-webkit-scrollbar-thumb{background:#64dcc8;border-radius:3px}
-  .desc-input{font-family:'Silkscreen',monospace;font-size:10px;margin-top:6px;padding:5px 10px;background:#111a30;color:#aabbcc;border:1px solid #1a3050;border-radius:6px;outline:none;width:min(95%,420px);resize:none;line-height:1.5;text-align:center}
+  .desc-input{font-family:'Silkscreen',monospace;font-size:20px;margin-top:6px;padding:5px 10px;background:#111a30;color:#aabbcc;border:1px solid #1a3050;border-radius:6px;outline:none;width:min(95%,420px);resize:none;line-height:1.5;text-align:center;overflow:hidden}
   .desc-input::placeholder{color:#445566}
-  .desc-display{display:none;margin-top:6px;padding:4px 14px;color:#8899aa;font-size:clamp(9px,1.8vw,11px);text-align:center;max-width:95%;line-height:1.5;word-wrap:break-word}
+  .desc-display{display:none;margin-top:6px;padding:4px 14px;color:#8899aa;font-size:clamp(18px,3.6vw,22px);text-align:center;max-width:95%;line-height:1.5;word-wrap:break-word}
   .view-mode .desc-display{display:block}
   .view-mode .desc-display:empty{display:none}
   .view-mode .desc-input{display:none}
-  .btn-edit{background:#27ae60;box-shadow:0 3px 10px #27ae6044;font-size:12px;padding:8px 20px;margin-top:10px}
+  .btn-edit{background:#2980b9;box-shadow:0 3px 10px #2980b944;font-size:12px;padding:8px 20px;margin-top:10px}
   .view-mode .topbar{display:none}
   .view-mode .divider{display:none}
   .view-mode .controls{display:none}
-  .view-mode .preview{width:100%!important;flex:1;justify-content:center;padding:20px}
+  .view-mode .preview{width:100%!important;flex:1;justify-content:center;padding:20px;padding-bottom:70px}
   .view-mode .scene{width:min(95%,560px);aspect-ratio:16/9}
-  .view-topbar{display:none;align-items:center;justify-content:center;gap:10px;padding:10px;border-bottom:1px solid #1a3050;flex-shrink:0}
-  .view-mode .view-topbar{display:flex}
+  .view-bottombar{display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;flex-shrink:0}
+  .view-mode .view-bottombar{display:flex}
+  .view-bottombar .btn{flex:1;border-radius:0;font-size:14px;padding:20px 0;letter-spacing:1px}
+  .vb-edit{background:#2980b9}
+  .vb-share{background:#27ae60}
+  .vb-rando{background:#e67e22}
 </style>
 </head>
 <body>
 <div id="app">
+  <div class="view-bottombar" id="viewBottombar">
+    <button class="btn vb-edit" id="btnEditView">✏️ Edit</button>
+    <button class="btn vb-share" id="btnShareView">🔗 Share</button>
+    <button class="btn vb-rando" id="btnStayView">🔄 Rando</button>
+  </div>
   <div class="topbar">
     <span class="title">⚔️ Character Builder</span>
     <div style="flex:1;min-width:80px"><input id="nameInput" value="Hero" placeholder="Name..."></div>
-    <div class="btns"><button class="btn btn-rand" id="btnRandom">🎲 Random</button><button class="btn btn-share" id="btnShare">🔗 Share</button><button class="btn btn-save" id="btnSave">💾 Save</button></div>
+    <div class="btns"><button class="btn btn-rand" id="btnRandom">🎲 Solo Rando</button><button class="btn btn-stay" id="btnStayEdit">🔄 Stay Random</button><button class="btn btn-share" id="btnShare">🔗 Share</button><button class="btn btn-save" id="btnSave">💾 Save</button></div>
   </div>
   <div class="main" id="mainArea">
     <div class="preview" id="previewPanel">
       <div class="scene"><canvas id="sceneCanvas" width="128" height="72"></canvas></div>
       <div class="nameplate" id="nameplate">Hero</div>
       <div class="desc-display" id="descDisplay"></div>
-      <textarea class="desc-input" id="descInput" rows="2" maxlength="200" placeholder="Add a description..."></textarea>
+      <textarea class="desc-input" id="descInput" rows="1" maxlength="300" placeholder="Add a description..."></textarea>
       <button class="btn btn-edit" id="btnEdit" style="display:none">✏️ Edit Character</button>
     </div>
     <div class="divider" id="divider"></div>
@@ -677,7 +687,8 @@ const descInput=document.getElementById("descInput");
 const descDisplay=document.getElementById("descDisplay");
 
 function updateNameplate(){const cn=nameInput.value||"???";const pn=petName.trim();nameplate.textContent=(opts.petSpecies!=="None"&&pn)?`${cn} & ${pn}`:cn;descDisplay.textContent=descInput.value;}
-descInput.addEventListener("input",()=>{descDisplay.textContent=descInput.value;});
+descInput.addEventListener("input",()=>{descDisplay.textContent=descInput.value;autoExpandDesc();});
+function autoExpandDesc(){descInput.style.height="auto";descInput.style.height=descInput.scrollHeight+"px";}
 
 // ─── Render UI ───
 function render(){renderCharSprite();renderPetSprite();updateNameplate();if(!viewMode)previewPanel.style.width=leftPct+"%";document.querySelector(".scene").classList.toggle("transparent",opts.background==="None");lastWeather=null;lastBg=null;renderTabs();renderOptions();}
@@ -768,223 +779,375 @@ function pick(arr){return arr[Math.floor(Math.random()*arr.length)];}
 // ——— Story Generator ———
 function generateStory(n,pn,species,cat,wpn,bg,wth,hg){
   const lbg=bg.toLowerCase();
+  const sl=species?species.toLowerCase():"";
   const an=species&&"aeiou".includes(species[0].toLowerCase())?"an":"a";
 
   // --- Solo hero (no pet) ---
   if(species==="None"||!pn){
-    const solo=[
-      `${n} stood alone in the ${lbg}. it was quiet. too quiet. ${n} did not like quiet.`,
-      `${n} had no companion. ${n} had no plan. ${n} had a vague sense that this was fine.`,
-      `the ${lbg} was empty. just ${n} and the wind. the wind had nothing useful to say.`,
-      `${n} looked around for allies. there were none. there was a nice rock, though.`,
-      `${n} traveled alone. not by choice. every pet in the kingdom had heard the stories.`,
-      `"i work alone," said ${n}, to nobody, because they were alone.`,
-      `${n} didn't need a sidekick. ${n} needed a map. ${n} had neither.`,
-      `somewhere out there was a loyal companion for ${n}. today was not that day.`,
-      `the ${lbg} stretched out before ${n}. ${n} stretched out a hand to nobody. classic ${n}.`,
-      `${n} had once had a pet. it left. ${n} doesn't like to talk about it.`,
+    const openers=[
+      `${n} stood alone in the ${lbg}.`,
+      `the ${lbg} was empty except for ${n}.`,
+      `${n} traveled alone.`,
+      `${n} had no companion and no plan.`,
+      `it was just ${n} out here.`,
+      `${n} arrived at the ${lbg}, alone, as usual.`,
+      `nobody had joined ${n}'s quest yet.`,
+      `${n} surveyed the ${lbg} in solitude.`,
+      `the ${lbg} didn't care about ${n}. the feeling was almost mutual.`,
+      `${n} set off alone into the ${lbg}.`,
     ];
-    if(wth==="Storm"||wth==="Rain")solo.push(
-      `${n} stood in the rain, alone, rethinking every decision that led to this moment.`,
-      `the rain didn't care that ${n} had no umbrella. the rain never cares.`
+    const closers=[
+      `it was quiet. too quiet. ${n} did not like quiet.`,
+      `${n} had a vague sense that this was fine.`,
+      `the wind had nothing useful to say.`,
+      `there was a nice rock, though.`,
+      `every pet in the kingdom had heard the stories.`,
+      `${n} talked to a bird. the bird left.`,
+      `${n} needed a map. ${n} had no map.`,
+      `somewhere, a loyal companion was actively avoiding ${n}.`,
+      `${n} stretched out a hand to nobody. classic ${n}.`,
+      `${n} had once had a pet. it left. ${n} doesn't talk about it.`,
+      `a tumbleweed rolled past. ${n} tried to befriend it. it kept rolling.`,
+      `${n} pretended this was a choice.`,
+      `at least nobody was judging ${n}. probably.`,
+      `${n} heard footsteps. it was their own echo. disappointing.`,
+    ];
+    if(wth==="Storm"||wth==="Rain")closers.push(
+      `the rain started. nobody was surprised except ${n}.`,
+      `the rain didn't care that ${n} had no umbrella. the rain never cares.`,
+      `at least the rain was company. bad company, but still.`
     );
-    if(wth==="Snow")solo.push(
-      `${n} trudged through the snow alone. at least the snow didn't judge. probably.`
+    if(wth==="Snow")closers.push(
+      `the snow didn't judge. probably.`,
+      `at least footprints proved ${n} existed.`
     );
-    if(wth==="Night")solo.push(
-      `${n} stared into the darkness. the darkness stared back. neither blinked. awkward.`
+    if(wth==="Night")closers.push(
+      `the darkness stared back. neither blinked.`,
+      `something rustled. it was just the wind. ${n} hoped.`
     );
-    if(wpn==="Staff")solo.push(
-      `${n} waved the staff at the empty ${lbg}. a leaf moved. ${n} claimed it as a victory.`
+    if(wpn==="Staff")closers.push(
+      `${n} waved the staff at nothing. a leaf moved. victory.`,
+      `the staff glowed. nobody was around to be impressed.`
     );
-    if(wpn==="Sword")solo.push(
-      `${n} drew the sword dramatically. there was no one around to see it. typical.`
+    if(wpn==="Sword")closers.push(
+      `${n} drew the sword dramatically. there was no audience. typical.`,
+      `${n} swung the sword at a bush. the bush did not flinch.`
     );
-    return pick(solo);
+    if(wpn==="Axe")closers.push(`${n} had an axe and nothing to chop. a metaphor for something.`);
+    if(wpn==="Bow")closers.push(`${n} reached for an arrow. no arrows. great start.`);
+    if(wpn==="None")closers.push(`${n} was unarmed and alone. a winning combination.`);
+    return pick(openers)+" "+pick(closers);
   }
 
-  // --- Pet stories ---
-  const pool=[];
-  const sl=species.toLowerCase();
-
-  // Universal (always in pool)
-  pool.push(
-    `${pn} was ${an} ${sl}. ${n} was a fool. both of these were established facts.`,
-    `${n} and ${pn} had been through a lot together. ${pn} had hated most of it.`,
-    `${pn} didn't choose this life. ${pn} didn't choose ${n}. ${pn} was starting to see a pattern.`,
-    `"we make a great team," said ${n}. ${pn} said nothing, which said everything.`,
-    `${n} looked at ${pn}. ${pn} looked at the horizon. one of them had priorities.`,
-    `${n} had big dreams. ${pn} had a nap planned. only one of these would happen today.`,
-    `${n} called it an adventure. ${pn} called it a series of poor decisions. both were correct.`,
-    `${pn} followed ${n} into the ${lbg}. not out of loyalty. out of morbid curiosity.`,
-    `${n} pointed at the ${lbg} dramatically. ${pn} sat down. meeting adjourned.`,
-    `${n} believed in destiny. ${pn} believed in snacks. only one of them was ever satisfied.`,
-    `"trust me," said ${n}. ${pn} had heard this before. it never ended well.`,
-    `${n} was having the best day ever. ${pn} was having a day. just a day.`,
+  // --- Pet stories: 3 composable layers ---
+  // Layer 1: OPENERS (establish relationship / scene)
+  const openers=[];
+  // Universal openers
+  openers.push(
+    `${pn} was ${an} ${sl}. ${n} was a fool.`,
+    `${n} and ${pn} had been through a lot together.`,
+    `${pn} didn't choose this life. ${pn} didn't choose ${n}.`,
+    `${n} looked at ${pn}. ${pn} looked at the horizon.`,
+    `${n} had big dreams. ${pn} had a nap planned.`,
+    `${n} called it an adventure.`,
+    `${pn} followed ${n} into the ${lbg}.`,
+    `${n} and ${pn} arrived at the ${lbg}.`,
+    `"we make a great team," said ${n}.`,
+    `${n} believed in destiny. ${pn} believed in snacks.`,
+    `${n} was having the best day ever.`,
+    `"trust me," said ${n}.`,
+    `${n} had a plan. ${pn} had doubts.`,
+    `another day, another quest.`,
+    `${n} grinned at ${pn}.`,
+    `it was ${n}'s idea to come here.`,
+    `${pn} had been patient all day.`,
+    `${n} announced the quest had begun.`,
+    `things had been going well until about five minutes ago.`,
+    `${n} promised ${pn} this would be quick.`,
+  );
+  // Category openers
+  if(cat==="Cats")openers.push(
+    `${pn} licked one paw slowly.`,
+    `${pn} sat on something important and refused to move.`,
+    `${pn} stared at ${n} like they were an idiot.`,
+    `${pn} knocked something off a ledge. again.`,
+    `${pn} purred briefly, then stopped.`,
+    `${pn} had trained ${n} well.`,
+    `${n} thought they owned ${pn}.`,
+  );
+  if(cat==="Dogs")openers.push(
+    `${pn} wagged at everything. everything.`,
+    `${pn} loved ${n} unconditionally.`,
+    `${pn} ate ${n}'s map.`,
+    `${pn} brought ${n} a stick nobody asked for.`,
+    `${pn} rolled in something horrible.`,
+    `${n} said "stay." ${pn} did not stay.`,
+    `${pn} spotted a squirrel.`,
+  );
+  if(cat==="Farm")openers.push(
+    `${pn} stared at ${n}. just stared.`,
+    `${pn} chewed slowly and with great judgment.`,
+    `${n} tried to explain the quest to ${pn}.`,
+    `${pn} was built for standing in fields.`,
+    `"onward!" said ${n}. ${pn} did not move.`,
+    `${n} and ${pn} made eye contact.`,
+    `${pn} had opinions about grass. only grass.`,
+  );
+  if(cat==="Wild")openers.push(
+    `${pn} was not technically a pet.`,
+    `no one had told ${pn} about domestication.`,
+    `${pn} could return to the wild at any moment.`,
+    `people stared at ${n} and ${pn}.`,
+    `${n} called ${pn} "my companion."`,
+    `${pn} tolerated proximity. on good days.`,
+    `${n} survived near ${pn}. that counted as bonding.`,
+  );
+  if(cat==="Small")openers.push(
+    `${pn} was small but absolutely fearless.`,
+    `${n} carried ${pn} in a pocket.`,
+    `${pn} squeaked with authority.`,
+    `${pn} fit in ${n}'s hand. ${pn}'s attitude did not.`,
+    `people underestimated ${pn}.`,
+    `${pn} climbed onto ${n}'s shoulder and surveyed the land.`,
+    `${pn} was tiny. ${pn}'s ego was not.`,
+  );
+  if(cat==="Mythological")openers.push(
+    `${pn} could level this entire village.`,
+    `legends spoke of ${pn}.`,
+    `${pn} had existed for centuries.`,
+    `people feared ${pn}. ${n} did not.`,
+    `${pn} breathed ancient power.`,
+    `kingdoms once trembled at ${pn}'s name.`,
+    `${pn} was a creature of myth and terror.`,
+    `${pn} had seen empires rise and fall.`,
   );
 
-  // Category-specific
-  if(cat==="Cats"){pool.push(
-    `${pn} stared at ${n} like they were an idiot. ${n} was starting to think ${pn} was right.`,
-    `${pn} licked one paw and walked away. meeting adjourned.`,
-    `${pn} tolerated ${n}. this was the highest honor a cat could bestow, and ${n} knew it.`,
-    `${pn} knocked something off a ledge. ${n} picked it up. ${pn} knocked it off again. system working.`,
-    `${n} tried to pet ${pn}. ${pn} allowed exactly three strokes before choosing violence.`,
-    `${pn} purred briefly, then remembered who ${n} was and stopped.`,
-    `${pn} had trained ${n} well. food appeared on time. the arrangement was acceptable.`,
-    `${n} thought they owned ${pn}. ${pn} thought this was hilarious.`,
-    `${pn} sat in a box. ${n} had bought a bed. ${pn} sat in the box the bed came in.`,
-  );}
-  if(cat==="Dogs"){pool.push(
-    `${pn} wagged anyway. ${pn} had no standards. ${n} found this deeply comforting.`,
-    `${pn} loved ${n} unconditionally. ${pn} also loved strangers, garbage, and loud noises.`,
-    `${pn} ate ${n}'s map. ${pn} felt no remorse. ${pn} wagged about it.`,
-    `${pn} would die for ${n}. ${pn} would also die for a stick. loyalty is complicated.`,
-    `${n} said "stay." ${pn} did not stay. ${pn} has never stayed. this was not new information.`,
-    `${pn} rolled in something horrible and then tried to cuddle ${n}. classic ${pn}.`,
-    `${pn} fetched the wrong thing. ${pn} was very proud. ${n} did not have the heart to explain.`,
-    `${n} threw a ball. ${pn} brought back a different, worse ball. ${n} didn't question it.`,
-  );}
-  if(cat==="Farm"){pool.push(
-    `${pn} stared at ${n}. just stared. ${n} had no idea what ${pn} wanted. neither did ${pn}.`,
-    `${pn} chewed slowly and judged ${n} with ancient, unblinking eyes.`,
-    `${n} tried to explain the quest to ${pn}. ${pn} ate some grass. fair response.`,
-    `${pn} was not built for adventure. ${pn} was built for standing in fields. ${pn} was nailing it.`,
-    `"onward!" said ${n}. ${pn} did not move. ${pn} found a good patch of grass and that was that.`,
-    `${n} and ${pn} made eye contact. it was unclear who was more confused by the situation.`,
-    `${n} tried to ride ${pn}. this went about as well as you'd expect.`,
-    `${pn} had no opinion about the quest. ${pn} had opinions about grass. that was the full list.`,
-  );}
-  if(cat==="Wild"){pool.push(
-    `${pn} was not a pet. ${n} was in denial about this. ${pn} was in denial about ${n}.`,
-    `no one had told ${pn} about domestication. ${pn} was here, feral and confused.`,
-    `${pn} could return to the wild at any moment. ${pn} stayed because ${n} had snacks.`,
-    `${n} called ${pn} "my companion." ${pn} called ${n} "that one who follows me."`,
-    `people stared at ${n} and ${pn}. this was not a normal pairing. ${pn} agreed completely.`,
-    `${pn} did not fetch. ${pn} did not sit. ${pn} occasionally tolerated proximity. progress.`,
-    `${n} found ${pn} in the wild. "found" was generous. "survived near" was more accurate.`,
-  );}
-  if(cat==="Small"){pool.push(
-    `${pn} was small but had the confidence of something much, much larger.`,
-    `${n} carried ${pn} in a pocket. ${pn} judged the world from up there.`,
-    `${pn} was tiny. ${pn}'s attitude was not. ${n} had learned this the hard way.`,
-    `${pn} squeaked. ${n} pretended to understand. the arrangement worked for both of them.`,
-    `${pn} fit in ${n}'s hand. the chaos ${pn} caused did not fit anywhere.`,
-    `people underestimated ${pn}. this was ${pn}'s greatest weapon. ${n} had scars to prove it.`,
-    `${n} bought ${pn} a tiny sword. ${pn} chewed it. close enough.`,
-  );}
-  if(cat==="Mythological"){pool.push(
-    `${pn} could level this entire village. ${pn} chose not to. today.`,
-    `${n} had a mythological companion. ${n} did not deserve one. everyone knew this.`,
-    `${pn} had existed for centuries. ${n} had existed for much less. ${pn} found this quaint.`,
-    `people feared ${pn}. ${n} did not. this said more about ${n} than about ${pn}.`,
-    `${pn} breathed ancient power. ${n} breathed heavily after climbing stairs.`,
-    `legends spoke of ${pn}. they did not mention ${n}. ${n} tried not to take it personally.`,
-    `${pn} had seen empires rise and fall. now ${pn} watched ${n} read a map upside down.`,
-    `${pn} was a creature of myth and terror. ${n} called ${pn} "buddy." ${pn} allowed it. barely.`,
-    `kingdoms trembled at ${pn}'s name. ${n} mispronounced it constantly.`,
-  );}
+  // Layer 2: MIDDLES (complications from weather/weapon/background/headgear)
+  const middles=[];
+  // Universal middles
+  middles.push(
+    `${pn} wanted to go home.`,
+    `${n} checked the map. the map was wrong.`,
+    `things were not going to plan.`,
+    `${pn} gave ${n} a look.`,
+    `${n} pretended everything was fine.`,
+    `there was a long silence.`,
+    `${n} tried to look heroic.`,
+    `${pn} sighed. or whatever the ${sl} version of sighing was.`,
+    `the situation was getting awkward.`,
+    `${n} made a speech. ${pn} did not listen.`,
+    `somebody's stomach growled. both of them pretended it wasn't theirs.`,
+    `${n} consulted the map upside down.`,
+    `the plan was falling apart. ${pn} was not surprised.`,
+    `${n} pointed dramatically at nothing in particular.`,
+    `"almost there," lied ${n}.`,
+  );
+  // Weather middles
+  if(wth==="Storm"||wth==="Rain")middles.push(
+    `the rain started. ${pn} blamed ${n}.`,
+    `${n} forgot to check the weather.`,
+    `"it'll clear up," said ${n}. it did not.`,
+    `they were soaked. the quest was also soaked.`,
+    `the rain came sideways.`,
+    `water dripped off ${n}'s nose. ${pn} watched with contempt.`,
+    `thunder rumbled. ${pn} was unimpressed. ${n} flinched.`,
+    `the ground turned to mud. ${n} slipped. ${pn} didn't.`,
+  );
+  if(wth==="Snow")middles.push(
+    `${pn} refused to walk in the snow.`,
+    `${n} said the snow was magical. ${pn} said it was cold.`,
+    `snow covered everything.`,
+    `${n}'s teeth were chattering. ${pn} pretended not to notice.`,
+    `the snow got deeper. morale got lower.`,
+    `${pn} became a small snow lump and stopped moving.`,
+  );
+  if(wth==="Night")middles.push(
+    `something moved in the dark.`,
+    `${pn}'s eyes glowed. ${n} pretended this was normal.`,
+    `the night was dark and full of noises.`,
+    `${n} tripped over something. it was ${pn}.`,
+    `neither of them could see. ${n} blamed the moon.`,
+  );
+  if(wth==="Foggy")middles.push(
+    `the fog swallowed the path.`,
+    `${n} lost ${pn} in the fog. ${pn} was right behind ${n}.`,
+    `"stay close," said ${n}. too late.`,
+    `${n} walked into a tree. ${pn} did not comment.`,
+    `they'd been walking in circles. ${pn} knew. ${pn} said nothing.`,
+  );
+  if(wth==="Sunset")middles.push(
+    `the sunset was beautiful. ${pn} was eating dirt.`,
+    `golden light made everything look heroic. even ${n}.`,
+    `${n} tried to share the moment. ${pn} was busy.`,
+  );
+  if(wth==="Rainbow")middles.push(
+    `a rainbow appeared. ${n} took it as a sign.`,
+    `the rainbow was nice. the quest was still terrible.`,
+    `"that's a good omen," said ${n}. ${pn} had heard this before.`,
+  );
+  // Weapon middles
+  if(wpn==="Staff")middles.push(
+    `${n} waved the staff dramatically. nothing happened.`,
+    `the staff glowed faintly.`,
+    `${n} pointed the staff and said something mystical.`,
+    `${n} leaned on the staff. the staff was not load-bearing.`,
+  );
+  if(wpn==="Sword")middles.push(
+    `${n} drew the sword. nothing needed slaying.`,
+    `${n} swung the sword at a bush. the bush won.`,
+    `the sword glinted in the light. ${pn} was not moved.`,
+    `${n} tripped over the sword. again.`,
+  );
+  if(wpn==="Axe")middles.push(
+    `${n} swung the axe for emphasis. ${pn} ducked.`,
+    `the axe was meant to be intimidating.`,
+    `so far the axe had only been used on firewood.`,
+  );
+  if(wpn==="Bow")middles.push(
+    `${n} reached for an arrow. no arrows.`,
+    `the bow made ${n} feel like a ranger. the aim said otherwise.`,
+    `${n} fired the bow heroically. the arrow went the wrong way.`,
+  );
+  if(wpn==="None")middles.push(
+    `${n} was unarmed. ${pn} was the weapon.`,
+    `${n} brought no weapon. ${pn} noticed.`,
+    `${n} raised both fists. ${pn} pretended not to know ${n}.`,
+  );
+  // Background middles
+  if(bg==="Castle")middles.push(
+    `the castle was closed for renovations.`,
+    `the castle gates did not open. ${n} pushed harder. still no.`,
+    `someone in the castle yelled "go away."`,
+  );
+  if(bg==="Mountains")middles.push(
+    `"almost at the top," lied ${n} for the fourth time.`,
+    `the mountain didn't care about ${n}'s quest.`,
+    `the altitude was making ${n} say weird things.`,
+  );
+  if(bg==="Beach")middles.push(
+    `sand got into everything. everything.`,
+    `the ocean did not comment on the situation.`,
+    `a crab pinched ${n}. ${pn} did not help.`,
+  );
+  if(bg==="Farm")middles.push(
+    `the farm smelled exactly how you'd expect.`,
+    `${n} had never been to a farm. it showed.`,
+    `a chicken walked past with more purpose than ${n}.`,
+  );
+  if(bg==="Park")middles.push(
+    `the park was peaceful until they arrived.`,
+    `${n} wanted adventure. ${pn} wanted a bench.`,
+    `someone's kid pointed and laughed at ${n}.`,
+  );
+  if(bg==="Meadow")middles.push(
+    `the meadow was nice. suspiciously nice.`,
+    `${n} picked a flower. ${pn} was unimpressed.`,
+    `the meadow went on forever. so did the boredom.`,
+  );
+  // Headgear middles
+  if(hg==="Crown")middles.push(
+    `the crown slid over ${n}'s eyes. again.`,
+    `${pn} did not bow. ${pn} would never bow.`,
+  );
+  if(hg==="Helmet")middles.push(
+    `${n} couldn't see through the helmet. ${pn} used this.`,
+    `the helmet made ${n}'s voice echo. ${pn} found this annoying.`,
+  );
+  if(hg==="Hood")middles.push(
+    `the hood kept falling over ${n}'s face.`,
+    `${n} wore a mysterious hood. ${pn} was not fooled.`,
+  );
 
-  // Weather-specific
-  if(wth==="Storm"||wth==="Rain"){pool.push(
-    `the rain started. ${pn} looked at ${n} like this was entirely their fault.`,
-    `${n} forgot to check the weather. ${pn} did not forget to look disappointed.`,
-    `"it'll clear up," said ${n}. it did not clear up. ${pn} filed this under "reasons."`,
-    `${pn} was soaked. ${n} was soaked. the quest was also soaked. nobody was happy.`,
-    `the rain came sideways. ${pn} gave ${n} a look that could curdle milk.`,
-  );}
-  if(wth==="Snow"){pool.push(
-    `${pn} refused to walk in the snow. ${n} carried ${pn}. ${pn} had planned this all along.`,
-    `${n} said the snow was magical. ${pn} said the snow was cold. ${pn} was right.`,
-    `snow covered everything. ${pn} sat down and became a lump. ${n} related to this deeply.`,
-    `"isn't the snow beautiful?" said ${n}. ${pn} couldn't feel their legs.`,
-  );}
-  if(wth==="Night"){pool.push(
-    `${n} heard a noise in the dark. it was ${pn}, judging silently. as always.`,
-    `the night was dark and full of terrors. ${pn} was one of them. ${n} was not.`,
-    `${pn}'s eyes glowed in the dark. ${n} pretended this was normal.`,
-  );}
-  if(wth==="Foggy"){pool.push(
-    `${n} lost ${pn} in the fog. ${pn} was right behind ${n}. ${pn} enjoyed this.`,
-    `the fog rolled in. ${n} got lost immediately. ${pn} had been lost for an hour already.`,
-    `"stay close," said ${n} into the fog. ${pn} was already somewhere else entirely.`,
-  );}
-  if(wth==="Sunset"){pool.push(
-    `the sunset was beautiful. ${n} tried to share the moment. ${pn} was eating dirt.`,
-    `${n} gazed at the sunset dramatically. ${pn} gazed at ${n}, wondering when dinner was.`,
-  );}
-  if(wth==="Rainbow"){pool.push(
-    `a rainbow appeared. ${n} took it as a sign. ${pn} took it as a coincidence.`,
-    `"look, ${pn}, a rainbow!" ${pn} had already seen it. ${pn} was not moved.`,
-  );}
+  // Layer 3: CLOSERS (punchlines / category personality payoffs)
+  const closers=[];
+  // Universal closers
+  closers.push(
+    `nobody was happy.`,
+    `${pn} said nothing, which said everything.`,
+    `one of them had priorities. it wasn't ${n}.`,
+    `only one of these would happen today, and it wasn't ${n}'s thing.`,
+    `both of these were established facts.`,
+    `${pn} had seen this before. it never ended well.`,
+    `${pn} was having a day. just a day.`,
+    `${pn} was starting to see a pattern.`,
+    `both were correct.`,
+    `the quest continued. morale did not.`,
+    `${n} smiled. ${pn} did not smile back.`,
+    `and yet, here they were. again.`,
+    `${n} learned nothing from this. as usual.`,
+    `tomorrow would be better. it would not be better.`,
+    `this was fine. this was completely fine.`,
+  );
+  // Category closers
+  if(cat==="Cats")closers.push(
+    `meeting adjourned.`,
+    `${n} picked it up. ${pn} knocked it off again. system working.`,
+    `${pn} allowed exactly three seconds of this, then chose violence.`,
+    `the arrangement was acceptable. for now.`,
+    `${pn} thought this was hilarious. in a cat way.`,
+    `${pn} sat in a box instead. priorities.`,
+    `${pn} began grooming. the conversation was over.`,
+    `${pn} turned around, showing ${n} the full contempt of a turned back.`,
+    `${pn} fell asleep. right there. mid-quest.`,
+  );
+  if(cat==="Dogs")closers.push(
+    `${pn} had no standards. ${n} found this comforting.`,
+    `${pn} also loved strangers, garbage, and loud noises. loyalty is broad.`,
+    `${pn} felt no remorse. ${pn} wagged about it.`,
+    `${pn} would also die for a stick. loyalty is complicated.`,
+    `${pn} has never stayed. this was not new information.`,
+    `then tried to cuddle ${n}. classic ${pn}.`,
+    `${pn} was very proud. ${n} did not have the heart to explain.`,
+    `${pn} brought back a different, worse thing. ${n} didn't question it.`,
+    `${pn} forgot the quest immediately. something smelled interesting.`,
+  );
+  if(cat==="Farm")closers.push(
+    `${pn} ate some grass. fair response.`,
+    `${pn} was nailing it. at standing. in a field.`,
+    `that was that. the grass was chosen.`,
+    `it was unclear who was more confused.`,
+    `this went about as well as you'd expect.`,
+    `${pn} blinked once. slowly. with tremendous judgment.`,
+    `${pn} went back to chewing. the audience was gone.`,
+    `${pn} had zero thoughts about this. confirmed zero.`,
+  );
+  if(cat==="Wild")closers.push(
+    `${pn} was in denial about ${n}. ${n} was in denial about everything.`,
+    `${pn} stayed because ${n} had snacks. only snacks.`,
+    `${pn} called ${n} "that one who follows me."`,
+    `${pn} tolerated proximity. barely. progress.`,
+    `"survived near" was more accurate than "found."`,
+    `${pn} growled softly. could've meant anything. probably bad.`,
+    `the wild called to ${pn}. ${pn} considered it. strongly.`,
+  );
+  if(cat==="Small")closers.push(
+    `this was ${pn}'s greatest weapon. ${n} had scars.`,
+    `${pn} judged the world from up there.`,
+    `${n} had learned this the hard way.`,
+    `the arrangement worked for both of them. allegedly.`,
+    `the chaos ${pn} caused did not fit anywhere.`,
+    `${pn} chewed on it. close enough to heroism.`,
+    `${pn} squeaked once. decisively. case closed.`,
+    `for something so small, ${pn} took up a lot of emotional space.`,
+  );
+  if(cat==="Mythological")closers.push(
+    `${pn} chose not to. today.`,
+    `everyone knew ${n} did not deserve this.`,
+    `${pn} found this quaint.`,
+    `this said more about ${n} than about ${pn}.`,
+    `${n} breathed heavily after climbing stairs. for comparison.`,
+    `they did not mention ${n}. ${n} tried not to take it personally.`,
+    `now ${pn} watched ${n} read a map upside down.`,
+    `${n} called ${pn} "buddy." ${pn} allowed it. barely.`,
+    `${n} mispronounced ${pn}'s name constantly. ${pn} let it slide. for now.`,
+  );
 
-  // Weapon-specific
-  if(wpn==="Staff"){pool.push(
-    `${n} waved the staff dramatically. nothing happened. ${pn} yawned.`,
-    `the staff glowed faintly. ${pn} was not impressed. ${pn} had seen glowing things before.`,
-    `${n} pointed the staff and said something mystical. ${pn} pretended not to know ${n}.`,
-  );}
-  if(wpn==="Sword"){pool.push(
-    `${n} drew the sword. ${pn} had seen this before. nothing ever actually needed slaying.`,
-    `${n} swung the sword at a bush. the bush won. ${pn} watched without sympathy.`,
-  );}
-  if(wpn==="Axe"){pool.push(
-    `${n} carried an axe for protection. so far it had only been used on firewood. ${pn} approved.`,
-    `the axe was meant to be intimidating. ${pn} was not intimidated.`,
-  );}
-  if(wpn==="Bow"){pool.push(
-    `${n} reached for an arrow. there were no arrows. ${pn} had chewed them all.`,
-    `${n} fired the bow heroically. the arrow went the wrong way. ${pn} flinched.`,
-  );}
-  if(wpn==="None"){pool.push(
-    `${n} was unarmed. ${pn} was the weapon. neither of them had accepted this yet.`,
-    `${n} brought no weapon. ${pn} was starting to question ${n}'s planning skills.`,
-  );}
-
-  // Background-specific
-  if(bg==="Castle"){pool.push(
-    `the castle was closed for renovations. nobody told ${n}.`,
-    `${n} approached the castle gates. the gates did not approach ${n} back.`,
-    `${pn} had never been to a castle. ${pn} was not as impressed as ${n} had hoped.`,
-  );}
-  if(bg==="Mountains"){pool.push(
-    `"almost at the top," lied ${n}. ${pn} had heard this four mountains ago.`,
-    `the mountain didn't care about ${n}'s quest. mountains never do.`,
-  );}
-  if(bg==="Beach"){pool.push(
-    `${pn} ate sand. ${n} questioned all life choices. the ocean did not comment.`,
-    `${n} wanted a beach adventure. ${pn} wanted sand out of everything. too late.`,
-  );}
-  if(bg==="Farm"){pool.push(
-    `the farm smelled exactly how you'd expect. ${pn} fit right in. ${n} did not.`,
-    `${n} had never been to a farm before. it showed. ${pn} was embarrassed for ${n}.`,
-  );}
-  if(bg==="Park"){pool.push(
-    `they went to the park. ${n} wanted adventure. ${pn} wanted a bench. ${pn} won.`,
-    `the park was peaceful until ${n} and ${pn} arrived. it was less peaceful after.`,
-  );}
-  if(bg==="Meadow"){pool.push(
-    `the meadow was nice. too nice. ${pn} suspected a trap. ${n} was picking flowers.`,
-    `${n} lay in the meadow dramatically. ${pn} also lay down. not for drama. just tired.`,
-  );}
-
-  // Headgear-specific
-  if(hg==="Crown"){pool.push(
-    `${n} wore a crown. ${pn} did not bow. ${pn} would never bow. ${n} accepted this.`,
-    `the crown made ${n} feel important. ${pn} made ${n} feel less important. balance.`,
-  );}
-  if(hg==="Helmet"){pool.push(
-    `${n} couldn't see through the helmet. ${pn} used this to their advantage.`,
-  );}
-  if(hg==="Hood"){pool.push(
-    `${n} wore a mysterious hood. ${pn} knew ${n} too well for mystery.`,
-  );}
-
-  return pick(pool);
+  // Assemble: opener + middle + closer
+  return pick(openers)+" "+pick(middles)+" "+pick(closers);
 }
 
 
-btnRandom.addEventListener("click",()=>{
+function doRandomize(){
   const allSpecies=Object.keys(PETS);const species=Math.random()>0.3?pick(allSpecies):"None";
   let pColor="Brown";if(species!=="None"){const p=PETS[species];pColor=pick([...(p.realistic||[]),...Object.keys(FANTASY_COLORS)]);}
   opts={skin:pick(Object.keys(SKIN)),eyes:pick(Object.keys(EYE)),height:3+Math.floor(Math.random()*8),hairStyle:pick(HAIR_STYLES),hairColor:pick(Object.keys(HAIR_COLORS)),shirt:pick(Object.keys(CLOTH)),pants:pick(Object.keys(CLOTH)),shoes:pick(Object.keys(CLOTH)),armor:pick(["None",...Object.keys(METAL)]),headgear:pick(["None","None","Helmet","Crown","Hood"]),headMetal:pick(Object.keys(METAL)),hoodColor:pick(Object.keys(CLOTH)),weapon:pick(["None","None","Sword","Axe","Staff","Bow"]),shield:pick(["None","None",...Object.keys(METAL)]),cape:pick(["None","None","None",...Object.keys(CLOTH)]),background:pick(BACKGROUNDS.filter(b=>b!=="None"&&b!=="Blank")),weather:pick(WEATHERS),petSpecies:species,petColor:pColor,petSide:pick(["Left","Right"]),petCategory:species!=="None"?PETS[species].cat:"Dogs"};
@@ -994,8 +1157,17 @@ btnRandom.addEventListener("click",()=>{
   nameInput.value=heroName;petName=species!=="None"?pick(petNames):"";
   const story=generateStory(heroName,petName,species,opts.petCategory,opts.weapon,opts.background,opts.weather,opts.headgear);
   descInput.value=story;descDisplay.textContent=story;
-  render();
-});
+  render();autoExpandDesc();
+}
+
+// Solo Rando (edit mode randomize)
+btnRandom.addEventListener("click",()=>{doRandomize();});
+
+// Stay Random buttons
+const btnStayEdit=document.getElementById("btnStayEdit");
+const btnStayView=document.getElementById("btnStayView");
+btnStayEdit.addEventListener("click",()=>{doRandomize();enterViewMode();});
+btnStayView.addEventListener("click",()=>{doRandomize();});
 
 // ─── Export ───
 btnSave.addEventListener("click",()=>{
@@ -1017,7 +1189,7 @@ function showToast(msg){toast.textContent=msg;toast.classList.add("show");setTim
 const PARAM_MAP={n:"name",pn:"petName",sk:"skin",ey:"eyes",ht:"height",hs:"hairStyle",hc:"hairColor",sh:"shirt",pa:"pants",so:"shoes",ar:"armor",hg:"headgear",hm:"headMetal",ho:"hoodColor",wp:"weapon",sd:"shield",ca:"cape",bg:"background",wt:"weather",ps:"petSpecies",pc:"petColor",pd:"petSide",ct:"petCategory"};
 const PARAM_REV=Object.fromEntries(Object.entries(PARAM_MAP).map(([k,v])=>[v,k]));
 
-btnShare.addEventListener("click",()=>{
+function doShare(){
   const p=new URLSearchParams();
   p.set("v","1");
   const cn=(nameInput.value||"").trim();if(cn&&cn!=="Hero")p.set("n",cn);
@@ -1028,7 +1200,10 @@ btnShare.addEventListener("click",()=>{
   if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(url).then(()=>showToast("Link copied to clipboard!")).catch(()=>showToast("Link ready - copy from address bar"));}
   else{showToast("Link ready - copy from address bar");}
   history.replaceState(null,"",url);
-});
+}
+btnShare.addEventListener("click",doShare);
+const btnShareView=document.getElementById("btnShareView");
+btnShareView.addEventListener("click",doShare);
 
 // --- Load from URL ---
 let viewMode=false;
@@ -1052,19 +1227,19 @@ const loadedFromURL=loadFromURL();
 function enterViewMode(){
   viewMode=true;
   document.getElementById("app").classList.add("view-mode");
-  btnEdit.style.display="";
 }
 function enterEditMode(){
   viewMode=false;
   document.getElementById("app").classList.remove("view-mode");
-  btnEdit.style.display="none";
   const url=window.location.origin+window.location.pathname;
   history.replaceState(null,"",url);
   render();
 }
 btnEdit.addEventListener("click",enterEditMode);
+const btnEditView=document.getElementById("btnEditView");
+btnEditView.addEventListener("click",enterEditMode);
 if(viewMode)enterViewMode();
 
 // --- Init ---
-renderCharSprite();renderPetSprite();renderBackground();resetParticles();renderTabs();renderOptions();updateNameplate();previewPanel.style.width=leftPct+"%";animate();
+renderCharSprite();renderPetSprite();renderBackground();resetParticles();renderTabs();renderOptions();updateNameplate();previewPanel.style.width=leftPct+"%";autoExpandDesc();animate();
 </script></body></html>
