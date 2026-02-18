@@ -75,19 +75,27 @@
   .view-mode .desc-display{display:block}
   .view-mode .desc-display:empty{display:none}
   .view-mode .desc-input{display:none}
-  .btn-edit{background:#27ae60;box-shadow:0 3px 10px #27ae6044;font-size:12px;padding:8px 20px;margin-top:10px}
-  .btn-stay-view{background:#e67e22;box-shadow:0 3px 10px #e67e2244;font-size:12px;padding:8px 20px;margin-top:10px}
+  .btn-edit{background:#2980b9;box-shadow:0 3px 10px #2980b944;font-size:12px;padding:8px 20px;margin-top:10px}
   .view-mode .topbar{display:none}
   .view-mode .divider{display:none}
   .view-mode .controls{display:none}
-  .view-mode .preview{width:100%!important;flex:1;justify-content:center;padding:20px}
+  .view-mode .preview{width:100%!important;flex:1;justify-content:center;padding:20px;padding-bottom:70px}
   .view-mode .scene{width:min(95%,560px);aspect-ratio:16/9}
-  .view-topbar{display:none;align-items:center;justify-content:center;gap:10px;padding:10px;border-bottom:1px solid #1a3050;flex-shrink:0}
-  .view-mode .view-topbar{display:flex}
+  .view-bottombar{display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;flex-shrink:0}
+  .view-mode .view-bottombar{display:flex}
+  .view-bottombar .btn{flex:1;border-radius:0;font-size:14px;padding:20px 0;letter-spacing:1px}
+  .vb-edit{background:#2980b9}
+  .vb-share{background:#27ae60}
+  .vb-rando{background:#e67e22}
 </style>
 </head>
 <body>
 <div id="app">
+  <div class="view-bottombar" id="viewBottombar">
+    <button class="btn vb-edit" id="btnEditView">✏️ Edit</button>
+    <button class="btn vb-share" id="btnShareView">🔗 Share</button>
+    <button class="btn vb-rando" id="btnStayView">🔄 Rando</button>
+  </div>
   <div class="topbar">
     <span class="title">⚔️ Character Builder</span>
     <div style="flex:1;min-width:80px"><input id="nameInput" value="Hero" placeholder="Name..."></div>
@@ -99,7 +107,6 @@
       <div class="nameplate" id="nameplate">Hero</div>
       <div class="desc-display" id="descDisplay"></div>
       <textarea class="desc-input" id="descInput" rows="1" maxlength="300" placeholder="Add a description..."></textarea>
-      <button class="btn btn-stay-view" id="btnStayView" style="display:none">🔄 Stay Random</button>
       <button class="btn btn-edit" id="btnEdit" style="display:none">✏️ Edit Character</button>
     </div>
     <div class="divider" id="divider"></div>
@@ -1182,7 +1189,7 @@ function showToast(msg){toast.textContent=msg;toast.classList.add("show");setTim
 const PARAM_MAP={n:"name",pn:"petName",sk:"skin",ey:"eyes",ht:"height",hs:"hairStyle",hc:"hairColor",sh:"shirt",pa:"pants",so:"shoes",ar:"armor",hg:"headgear",hm:"headMetal",ho:"hoodColor",wp:"weapon",sd:"shield",ca:"cape",bg:"background",wt:"weather",ps:"petSpecies",pc:"petColor",pd:"petSide",ct:"petCategory"};
 const PARAM_REV=Object.fromEntries(Object.entries(PARAM_MAP).map(([k,v])=>[v,k]));
 
-btnShare.addEventListener("click",()=>{
+function doShare(){
   const p=new URLSearchParams();
   p.set("v","1");
   const cn=(nameInput.value||"").trim();if(cn&&cn!=="Hero")p.set("n",cn);
@@ -1193,7 +1200,10 @@ btnShare.addEventListener("click",()=>{
   if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(url).then(()=>showToast("Link copied to clipboard!")).catch(()=>showToast("Link ready - copy from address bar"));}
   else{showToast("Link ready - copy from address bar");}
   history.replaceState(null,"",url);
-});
+}
+btnShare.addEventListener("click",doShare);
+const btnShareView=document.getElementById("btnShareView");
+btnShareView.addEventListener("click",doShare);
 
 // --- Load from URL ---
 let viewMode=false;
@@ -1217,19 +1227,17 @@ const loadedFromURL=loadFromURL();
 function enterViewMode(){
   viewMode=true;
   document.getElementById("app").classList.add("view-mode");
-  btnEdit.style.display="";
-  btnStayView.style.display="";
 }
 function enterEditMode(){
   viewMode=false;
   document.getElementById("app").classList.remove("view-mode");
-  btnEdit.style.display="none";
-  btnStayView.style.display="none";
   const url=window.location.origin+window.location.pathname;
   history.replaceState(null,"",url);
   render();
 }
 btnEdit.addEventListener("click",enterEditMode);
+const btnEditView=document.getElementById("btnEditView");
+btnEditView.addEventListener("click",enterEditMode);
 if(viewMode)enterViewMode();
 
 // --- Init ---
